@@ -5,6 +5,7 @@
 # If you don't like vim, you can set VIMDIFFCMD to some other editor/script.
 # It will be called with merged temporary file path as first arg and (guessed)
 # package.unmask path as the second one.
+# EXAMPLE: VIMDIFFCMD='diff -u' vimdiffmask.sh
 
 MY_PN=vimdiffmask
 MY_PV=0.1
@@ -114,6 +115,6 @@ trap cleanup EXIT HUP INT QUIT TERM
 TEMPFILE="$(get_tempfile)"
 
 process_all > "${TEMPFILE}"
-"${VIMDIFFCMD:-vimdiff}" "${TEMPFILE}" "${PORTAGE_CONFIGROOT}"/etc/portage/package.unmask
+${VIMDIFFCMD:-vimdiff} "${TEMPFILE}" "${PORTAGE_CONFIGROOT}"/etc/portage/package.unmask
 
 exit 0
