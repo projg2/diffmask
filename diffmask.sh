@@ -165,7 +165,7 @@ case "${ACTION}" in
 	install)
 		cat > "${TEMPFILE}" << __EOF__
 DESTDIR =
-PREFIX = /usr
+PREFIX = /usr/local
 SYMLINKS = 1
 MY_PN = ${MY_PN}
 
