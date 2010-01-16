@@ -7,8 +7,8 @@
 # package.unmask path as the second one.
 # EXAMPLE: VIMDIFFCMD='diff -u' vimdiffmask.sh
 
-MY_PN=vimdiffmask
-MY_PV=0.1
+MY_PN=diffmask
+MY_PV=0.2
 
 die() {
 	echo "$@" >&2
@@ -105,16 +105,86 @@ process_all() {
 	process_repo "${PORTDIR}"
 }
 
-PORTDIR="$(portageq portdir)"
-[ -n "${PORTDIR}" ] || die 'Unable to get PORTDIR.'
-[ -d "${PORTDIR}" ] || die 'PORTDIR does not point to a valid directory.'
-PORTAGE_CONFIGROOT="$(portageq envvar PORTAGE_CONFIGROOT)"
+usage() {
+	cat >&2 <<__EOF__
+Synopsis: $0 <action> ...
+
+Where action is:
+	vimdiff		edit package.unmask using \${VIMDIFFCMD} or vimdiff
+
+	install ...	behave like 'make install', passing options
+			(default: DESTDIR= PREFIX=/usr SYMLINKS=1)
+__EOF__
+
+	exit 0
+}
+
+ACTION="$1"
+
+NEEDMASK=1
+
+case "${ACTION}" in
+	vimdiff)
+		shift
+		;;
+	install)
+		shift
+		NEEDMASK=0
+		;;
+	*)
+		case "$(basename "$0")" in
+			vim*)
+				ACTION=vimdiff
+				;;
+			*)
+				usage
+				;;
+		esac
+		;;
+esac
+
+if [ ${NEEDMASK} -eq 1 ]; then
+	PORTDIR="$(portageq portdir)"
+	[ -n "${PORTDIR}" ] || die 'Unable to get PORTDIR.'
+	[ -d "${PORTDIR}" ] || die 'PORTDIR does not point to a valid directory.'
+	PORTAGE_CONFIGROOT="$(portageq envvar PORTAGE_CONFIGROOT)"
+fi
 
 TEMPFILE=
 trap cleanup EXIT HUP INT QUIT TERM
 TEMPFILE="$(get_tempfile)"
 
-process_all > "${TEMPFILE}"
-${VIMDIFFCMD:-vimdiff} "${TEMPFILE}" "${PORTAGE_CONFIGROOT}"/etc/portage/package.unmask
+if [ ${NEEDMASK} -eq 1 ]; then
+	process_all > "${TEMPFILE}"
+fi
+
+case "${ACTION}" in
+	vimdiff)
+		${VIMDIFFCMD:-vimdiff} "${TEMPFILE}" "${PORTAGE_CONFIGROOT}"/etc/portage/package.unmask
+		;;
+	install)
+		cat > "${TEMPFILE}" << __EOF__
+DESTDIR =
+PREFIX = /usr
+SYMLINKS = 1
+MY_PN = ${MY_PN}
+
+BINDIR = \$(PREFIX)/bin
+
+DMASK = 022
+FMOD = 0755
+
+install:
+	umask \$(DMASK) && mkdir -p "\$(DESTDIR)\$(BINDIR)"
+	cp -f "$0" "\$(DESTDIR)\$(BINDIR)"/\$(MY_PN)
+	chmod \$(FMOD) "\$(DESTDIR)\$(BINDIR)"/\$(MY_PN)
+	[ \$(SYMLINKS) -ne 1 ] || ln -fs \$(MY_PN) "\$(DESTDIR)\$(BINDIR)"/vim\$(MY_PN)
+
+.PHONY: install
+__EOF__
+
+		make -f "${TEMPFILE}" "$@" install 
+		;;
+esac
 
 exit 0
