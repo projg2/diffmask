@@ -16,6 +16,9 @@ class Suicide:
 class MaskFile:
 	class MaskRepo:
 		class MaskBlock:
+			def __eq__(self, other):
+				return (self.comment == other.comment and self.atoms == other.atoms)
+
 			def __str__(self):
 				return ''.join(self.before + self.comment + self.atoms + self.after)
 
@@ -108,15 +111,24 @@ class UnmaskFileClean:
 			out.extend([str(x) for x in self.blocks])
 			return ''.join(out)
 
-		def __init__(self, maskr, unmaskr):
-			self.name = unmaskr.name
+		def __init__(self, maskr, unmaskr, noner):
+			""" Try to match blocks in unmaskr (unmask entries associated with repo)
+				and noner (unassociated unmask entries) to those in maskr (mask entries
+				associated with repo). Create blocklist containing matched entries. """
+			self.name = maskr.name
 			self.blocks = []
+			inblocks = []
 			tblocks = []
 
-			for b in unmaskr.blocks:
+			if unmaskr is not None:
+				inblocks.extend(unmaskr.blocks)
+			if noner is not None:
+				inblocks.extend(noner.blocks)
+
+			for b in inblocks:
 				# first try to get exact match
 				for cb in maskr.blocks:
-					if cb.comment == b.comment and cb.atoms == b.atoms:
+					if cb == b:
 						tblocks.append(cb)
 						break
 				else:
@@ -134,9 +146,9 @@ class UnmaskFileClean:
 			# sort & unify, now we have to get exact matches
 			for b in tblocks:
 				for cb in maskr.blocks:
-					if cb.comment == b.comment and cb.atoms == b.atoms:
+					if cb == b:
 						for ub in self.blocks: # unify
-							if cb.comment == ub.comment and cb.atoms == ub.atoms:
+							if cb == ub:
 								break
 						else:
 							self.blocks.append(cb)
@@ -148,14 +160,30 @@ class UnmaskFileClean:
 		return ''.join([str(x) for x in self.repos])
 
 	def __init__(self, mask, unmask):
+		""" Update and cleanup 'unmask' file to match 'mask' file. """
 		self.repos = []
+
+		# find the repo containing unmatched entries
+		# (in fact it should be always the first one but better safe than sorry)
 		for r in unmask.repos:
-			try:
-				mr = mask.GetRepo(r.name)
-			except KeyError: # repo only in unmask file, we can drop it
-				pass
-			else:
-				self.repos.append(self.UnmaskRepoClean(mr, r))
+			if r.name is None:
+				nonerepo = r
+				break
+		else:
+			nonerepo = None
+
+		for mr in mask.repos:
+			if mr.name is not None:
+				try:
+					r = unmask.GetRepo(mr.name)
+				except KeyError: # repo only in mask file
+					r = None
+
+				outr = self.UnmaskRepoClean(mr, r, nonerepo)
+				if len(outr.blocks):
+					self.repos.append(outr)
+
+		# repos which are only in unmask file are dropped implicitly
 
 class MaskMerge:
 	def ProcessMaskFile(self, file, header):
