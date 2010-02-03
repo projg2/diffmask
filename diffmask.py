@@ -7,6 +7,7 @@ MY_PN='diffmask'
 MY_PV='0.3'
 
 import os, os.path, sys, tempfile
+from optparse import OptionParser, OptionGroup
 
 import portage
 
@@ -56,13 +57,36 @@ class MaskMerge:
 		f.seek(0, os.SEEK_SET)
 		return ''.join(f.readlines())
 
+	def GetPath(self):
+		return self.tempfile.name
+
 	def __init__(self):
 		self.tempfile = tempfile.NamedTemporaryFile()
 		self.ProcessAll()
 
+def vimdiff():
+	m = MaskMerge()
+	os.system('%s "%s" "%s"' % ('vimdiff', m.GetPath(), '/etc/portage/package.unmask'))
+
 def main(argv):
-	merge = MaskMerge()
-	print merge
+	parser = OptionParser(version=MY_PV, usage='%prog <action> [options]')
+	actions = OptionGroup(parser, 'Actions')
+	actions.add_option('-v', '--vimdiff', action='store_const', dest='mode', const='vimdiff',
+			help='vimdiff merged package.mask with package.unmask')
+	parser.add_option_group(actions)
+	(opts, args) = parser.parse_args(args=argv[1:])
+
+	if opts.mode is None:
+		if os.path.basename(argv[0]).startswith('vimdiff'):
+			opts.mode = 'vimdiff'
+		else:
+			parser.print_help()
+			return 2
+
+	if opts.mode == 'vimdiff':
+		vimdiff()
+
 	return 0
 
-sys.exit(main(sys.argv))
+if __name__ == '__main__':
+	sys.exit(main(sys.argv))
