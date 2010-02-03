@@ -10,14 +10,31 @@ import os, os.path, sys, tempfile
 import optparse
 import portage
 
+class Suicide:
+	pass
+
+global i
+i = 0
+
 class MaskFile:
 	class MaskRepo:
 		class MaskBlock:
 			def __str__(self):
-				return ''.join(self.data)
+				return ''.join(self.before + self.atoms + self.after)
 
 			def __init__(self, data):
-				self.data = data
+				self.before = []
+				self.atoms = []
+				self.after = []
+
+				for l in data:
+					if l.startswith('#') or l.strip() == '':
+						if len(self.atoms) == 0:
+							self.before.append(l)
+						else:
+							self.after.append(l)
+					else:
+						self.atoms.append(l)
 
 		def AppendBlock(self, data):
 			self.blocks.append(self.MaskBlock(data))
@@ -70,13 +87,13 @@ class MaskFile:
 		# cleanup leading/trailing whitespace (one belonging to repo header)
 		for r in self.repos:
 			try:
-				if r.blocks[0].data[0] == '\n':
-					del r.blocks[0].data[0]
+				if r.blocks[0].before[0] == '\n':
+					del r.blocks[0].before[0]
 			except IndexError:
 				pass
 			try:
-				if r.blocks[-1].data[-1] == '\n':
-					del r.blocks[-1].data[-1]
+				if r.blocks[-1].after[-1] == '\n':
+					del r.blocks[-1].after[-1]
 			except IndexError:
 				pass
 
