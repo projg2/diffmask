@@ -13,8 +13,26 @@ import portage
 
 class MaskMerge:
 	def ProcessMaskFile(self, file, header):
+		mf = file.readlines()
+
+		# try to drop copyright, examples etc.
+		ccb = None # current comment block
+		gotwhite = True # whitespace status
+
+		for i in range(len(mf)):
+			if mf[i].startswith('#'):
+				if gotwhite:
+					ccb = i
+					gotwhite = False
+			elif mf[i].strip() == '':
+				gotwhite = True
+			else: # package atom
+				if ccb is not None:
+					del mf[:ccb]
+				break
+
 		self.tempfile.write('\n## *%s*\n\n' % header)
-		self.tempfile.writelines(file.readlines())
+		self.tempfile.writelines(mf)
 
 	def ProcessRepo(self, path):
 		try:
