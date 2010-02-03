@@ -64,17 +64,27 @@ class MaskMerge:
 		self.tempfile = tempfile.NamedTemporaryFile()
 		self.ProcessAll()
 
-def vimdiff():
+def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask """
 	m = MaskMerge()
-	os.system('%s "%s" "%s"' % ('vimdiff', m.GetPath(), '/etc/portage/package.unmask'))
+	os.system('%s "%s" "%s"' % (vimdiffcmd, m.GetPath(), unmaskpath))
 
 def main(argv):
 	parser = OptionParser(version=MY_PV, usage='%prog <action> [options]')
-	actions = OptionGroup(parser, 'Actions')
-	actions.add_option('-v', '--vimdiff', action='store_const',
+
+	gr = OptionGroup(parser, 'Actions')
+	gr.add_option('-v', '--vimdiff', action='store_const',
 			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
-	parser.add_option_group(actions)
+	parser.add_option_group(gr)
+
+	gr = OptionGroup(parser, 'Options related to vimdiff')
+	gr.add_option('--vimdiffcmd', action='store',
+			dest='vimdiff', default='vimdiff', help='vimdiff command')
+	gr.add_option('-u', '--unmask-file', action='store',
+			dest='unmask', default='/etc/portage/package.unmask',
+			help='package.unmask file location')
+	parser.add_option_group(gr)
+
 	(opts, args) = parser.parse_args(args=argv[1:])
 
 	if opts.mode is None:
@@ -85,7 +95,7 @@ def main(argv):
 			return 2
 
 	if opts.mode == 'vimdiff':
-		vimdiff()
+		vimdiff(opts.vimdiff, opts.unmask)
 
 	return 0
 
