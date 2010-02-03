@@ -88,6 +88,7 @@ def vimdiff(vimdiffcmd, unmaskpath):
 	os.system('%s "%s" "%s"' % (vimdiffcmd, m.GetPath(), unmaskpath))
 
 def main(argv):
+	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
 	parser = OptionParser(version=MY_PV, usage='%prog <action> [options]')
 
 	gr = OptionGroup(parser, 'Actions')
@@ -99,8 +100,8 @@ def main(argv):
 	gr.add_option('--vimdiffcmd', action='store',
 			dest='vimdiff', default='vimdiff', help='vimdiff command')
 	gr.add_option('-u', '--unmask-file', action='store',
-			dest='unmask', default='/etc/portage/package.unmask',
-			help='package.unmask file location')
+			dest='unmask', default=defpunmask,
+			help='package.unmask file location (default: %s)' % defpunmask)
 	parser.add_option_group(gr)
 
 	(opts, args) = parser.parse_args(args=argv[1:])
