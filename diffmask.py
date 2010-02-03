@@ -33,6 +33,12 @@ class MaskFile:
 			self.name = name
 			self.blocks = []
 
+	def GetRepo(self, name):
+		for r in self.repos:
+			if r.name == name:
+				return r
+		raise KeyError('No such repo')
+
 	def __str__(self):
 		return ''.join([str(x) for x in self.repos])
 
@@ -73,6 +79,28 @@ class MaskFile:
 					del r.blocks[-1].data[-1]
 			except IndexError:
 				pass
+
+class UnmaskFileClean:
+	class UnmaskRepoClean:
+		def __str__(self):
+			return str(self.unmaskrepo)
+
+		def __init__(self, maskr, unmaskr):
+			self.maskrepo = maskr
+			self.unmaskrepo = unmaskr
+
+	def __str__(self):
+		return ''.join([str(x) for x in self.repos])
+
+	def __init__(self, mask, unmask):
+		self.repos = []
+		for r in unmask.repos:
+			try:
+				mr = mask.GetRepo(r.name)
+			except KeyError: # repo only in unmask file, we can drop it
+				pass
+			else:
+				self.repos.append(self.UnmaskRepoClean(mr, r))
 
 class MaskMerge:
 	def ProcessMaskFile(self, file, header):
@@ -151,18 +179,15 @@ class MaskMerge:
 
 def update(unmaskpath):
 	""" Update unmasks according to current package.mask file and remove old ones. """
-	m = MaskMerge()
-	mask = MaskFile(m.GetLines())
+	mask = MaskFile(MaskMerge().GetLines())
 	unmask = MaskFile(open(unmaskpath, 'r').readlines())
+	cmp = UnmaskFileClean(mask, unmask)
 
 	# debug
-	for i in range(5):
-		print '<%d>\n%s' % (i, mask.repos[-1].blocks[i])
-
 	tmp = tempfile.NamedTemporaryFile()
-	tmp.write(str(mask))
+	tmp.write(str(cmp))
 	tmp.flush()
-	os.system('diff -dupr %s %s' % (m.GetPath(), tmp.name))
+	os.system('diff -dupr %s %s' % (unmaskpath, tmp.name))
 	# /debug
 
 def vimdiff(vimdiffcmd, unmaskpath):
