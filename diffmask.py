@@ -202,8 +202,8 @@ class MaskMerge:
 					del mf[:ccb]
 				break
 
-		self.tempfile.write('\n## *%s*\n\n' % header)
-		self.tempfile.writelines(mf)
+		self.data.extend(['\n', '## *%s*\n' % header, '\n'])
+		self.data.extend(mf)
 
 	def ProcessRepo(self, path):
 		try:
@@ -240,21 +240,15 @@ class MaskMerge:
 		self.ProcessOverlays()
 		self.ProcessProfiles()
 		self.ProcessRepo(self.portdir)
-		self.tempfile.flush()
 
 	def __str__(self):
-		return ''.join(self.GetLines())
-
-	def GetPath(self):
-		return self.tempfile.name
+		return ''.join(self.data)
 
 	def GetLines(self):
-		f = self.tempfile
-		f.seek(0, os.SEEK_SET)
-		return f.readlines()
+		return self.data
 
 	def __init__(self):
-		self.tempfile = tempfile.NamedTemporaryFile()
+		self.data = []
 		self.ProcessAll()
 
 def update(unmaskpath):
@@ -263,17 +257,23 @@ def update(unmaskpath):
 	unmask = MaskFile(open(unmaskpath, 'r').readlines())
 	cmp = UnmaskFileClean(mask, unmask)
 
-	newfn = portage.util.new_protect_filename(unmaskpath)
-	newf = open(newfn, 'w')
-	newf.write(str(cmp))
-	newf.close()
+	scmp = str(cmp)
+	if scmp.strip() == str(unmask).strip():
+		print 'The unmask file is up-to-date.'
+	else:
+		newfn = portage.util.new_protect_filename(unmaskpath)
+		newf = open(newfn, 'w')
+		newf.write(str(cmp))
 
-	print 'New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn
+		print 'New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn
 
 def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
 	m = MaskMerge()
-	os.system('%s "%s" "%s"' % (vimdiffcmd, m.GetPath(), unmaskpath))
+	t = tempfile.NamedTemporaryFile()
+	t.write(str(m))
+	t.flush()
+	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
 
 def main(argv):
 	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
