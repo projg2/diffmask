@@ -10,9 +10,6 @@ import os, os.path, sys, tempfile
 import optparse
 import portage
 
-class Suicide:
-	pass
-
 class MaskFile:
 	class MaskRepo:
 		class MaskBlock:
