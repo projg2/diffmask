@@ -65,14 +65,15 @@ class MaskMerge:
 		self.ProcessAll()
 
 def vimdiff():
+	""" vimdiff merged package.mask with package.unmask """
 	m = MaskMerge()
 	os.system('%s "%s" "%s"' % ('vimdiff', m.GetPath(), '/etc/portage/package.unmask'))
 
 def main(argv):
 	parser = OptionParser(version=MY_PV, usage='%prog <action> [options]')
 	actions = OptionGroup(parser, 'Actions')
-	actions.add_option('-v', '--vimdiff', action='store_const', dest='mode', const='vimdiff',
-			help='vimdiff merged package.mask with package.unmask')
+	actions.add_option('-v', '--vimdiff', action='store_const',
+			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
 	parser.add_option_group(actions)
 	(opts, args) = parser.parse_args(args=argv[1:])
 
