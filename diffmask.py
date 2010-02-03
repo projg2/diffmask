@@ -97,6 +97,7 @@ class MaskMerge:
 		self.ProcessOverlays()
 		self.ProcessProfiles()
 		self.ProcessRepo(self.portdir)
+		self.tempfile.flush()
 
 	def __str__(self):
 		return ''.join(self.GetLines())
@@ -125,12 +126,13 @@ def update(unmaskpath):
 
 	tmp = tempfile.NamedTemporaryFile()
 	tmp.write(str(mask))
+	tmp.flush()
 	os.system('diff -dupr %s %s' % (m.GetPath(), tmp.name))
 	# /debug
 
 def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
-	m = MaskFile(MaskMerge().GetLines)
+	m = MaskMerge()
 	os.system('%s "%s" "%s"' % (vimdiffcmd, m.GetPath(), unmaskpath))
 
 def main(argv):
