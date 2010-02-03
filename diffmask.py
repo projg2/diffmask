@@ -11,33 +11,66 @@ import optparse
 import portage
 
 class MaskFile:
-	class MaskBlock:
-		def __str__(self):
-			return ''.join(self.data)
+	class MaskRepo:
+		class MaskBlock:
+			def __str__(self):
+				return ''.join(self.data)
 
-		def __init__(self, data):
-			self.data = data
+			def __init__(self, data):
+				self.data = data
+
+		def AppendBlock(self, data):
+			self.blocks.append(self.MaskBlock(data))
+
+		def __str__(self):
+			out = []
+			if self.name:
+				out.append('\n## *%s*\n\n' % self.name)
+			out.extend([str(x) for x in self.blocks])
+			return ''.join(out)
+
+		def __init__(self, name):
+			self.name = name
+			self.blocks = []
 
 	def __str__(self):
-		return ''.join([str(x) for x in self.blocks])
+		return ''.join([str(x) for x in self.repos])
 
 	def __init__(self, data):
-		self.blocks = []
-
+		repo = self.MaskRepo(None)
+		self.repos = [repo]
 		buf = []
 		gotatoms = False
+
 		for l in data:
 			if l.startswith('#'):
 				if gotatoms:
-					self.blocks.append(self.MaskBlock(buf))
+					repo.AppendBlock(buf)
 					buf = []
 					gotatoms = False
+				if l.startswith('## *') and l.endswith('*\n'): # repo name
+					repo = self.MaskRepo(l[4:-2])
+					self.repos.append(repo)
+					continue
 			elif ''.join(l).strip() != '':
 				gotatoms = True
 			buf.append(l)
 
 		if ''.join(buf).strip() != '':
-			self.blocks.append(self.MaskBlock(buf))
+			repo.AppendBlock(buf)
+
+		# cleanup leading/trailing whitespace (one belonging to repo header)
+		for r in self.repos:
+			try:
+				if r.blocks[0].data[0] == '\n':
+					del r.blocks[0].data[0]
+			except IndexError:
+				pass
+			try:
+				if r.blocks[-1].data[-1] == '\n':
+					del r.blocks[-1].data[-1]
+			except IndexError:
+				pass
 
 class MaskMerge:
 	def ProcessMaskFile(self, file, header):
@@ -122,7 +155,7 @@ def update(unmaskpath):
 
 	# debug
 	for i in range(5):
-		print '<%d>\n%s' % (i, mask.blocks[i])
+		print '<%d>\n%s' % (i, mask.repos[-1].blocks[i])
 
 	tmp = tempfile.NamedTemporaryFile()
 	tmp.write(str(mask))
