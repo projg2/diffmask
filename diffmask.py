@@ -10,6 +10,35 @@ import os, os.path, sys, tempfile
 import optparse
 import portage
 
+class MaskFile:
+	class MaskBlock:
+		def __str__(self):
+			return ''.join(self.data)
+
+		def __init__(self, data):
+			self.data = data
+
+	def __str__(self):
+		return ''.join([str(x) for x in self.blocks])
+
+	def __init__(self, data):
+		self.blocks = []
+
+		buf = []
+		gotatoms = False
+		for l in data:
+			if l.startswith('#'):
+				if gotatoms:
+					self.blocks.append(self.MaskBlock(buf))
+					buf = []
+					gotatoms = False
+			elif ''.join(l).strip() != '':
+				gotatoms = True
+			buf.append(l)
+
+		if ''.join(buf).strip() != '':
+			self.blocks.append(self.MaskBlock(buf))
+
 class MaskMerge:
 	def ProcessMaskFile(self, file, header):
 		mf = file.readlines()
@@ -70,27 +99,50 @@ class MaskMerge:
 		self.ProcessRepo(self.portdir)
 
 	def __str__(self):
-		f = self.tempfile
-		f.seek(0, os.SEEK_SET)
-		return ''.join(f.readlines())
+		return ''.join(self.GetLines())
 
 	def GetPath(self):
 		return self.tempfile.name
+
+	def GetLines(self):
+		f = self.tempfile
+		f.seek(0, os.SEEK_SET)
+		return f.readlines()
 
 	def __init__(self):
 		self.tempfile = tempfile.NamedTemporaryFile()
 		self.ProcessAll()
 
-def vimdiff(vimdiffcmd, unmaskpath):
-	""" vimdiff merged package.mask with package.unmask """
+def update(unmaskpath):
+	""" Update unmasks according to current package.mask file and remove old ones. """
 	m = MaskMerge()
+	mask = MaskFile(m.GetLines())
+	unmask = MaskFile(open(unmaskpath, 'r').readlines())
+
+	# debug
+	for i in range(5):
+		print '<%d>\n%s' % (i, mask.blocks[i])
+
+	tmp = tempfile.NamedTemporaryFile()
+	tmp.write(str(mask))
+	os.system('diff -dupr %s %s' % (m.GetPath(), tmp.name))
+	# /debug
+
+def vimdiff(vimdiffcmd, unmaskpath):
+	""" vimdiff merged package.mask with package.unmask. """
+	m = MaskFile(MaskMerge().GetLines)
 	os.system('%s "%s" "%s"' % (vimdiffcmd, m.GetPath(), unmaskpath))
 
 def main(argv):
 	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
+	parser.add_option('-U', '--unmask-file', action='store',
+			dest='unmask', default=defpunmask,
+			help='package.unmask file location (default: %s)' % defpunmask)
 
 	gr = optparse.OptionGroup(parser, 'Actions')
+	gr.add_option('-u', '--update', action='store_const',
+			dest='mode', const='update', help=update.__doc__.strip())
 	gr.add_option('-v', '--vimdiff', action='store_const',
 			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
 	parser.add_option_group(gr)
@@ -98,9 +150,6 @@ def main(argv):
 	gr = optparse.OptionGroup(parser, 'Options related to vimdiff')
 	gr.add_option('--vimdiffcmd', action='store',
 			dest='vimdiff', default='vimdiff', help='vimdiff command')
-	gr.add_option('-u', '--unmask-file', action='store',
-			dest='unmask', default=defpunmask,
-			help='package.unmask file location (default: %s)' % defpunmask)
 	parser.add_option_group(gr)
 
 	(opts, args) = parser.parse_args(args=argv[1:])
@@ -114,6 +163,8 @@ def main(argv):
 
 	if opts.mode == 'vimdiff':
 		vimdiff(opts.vimdiff, opts.unmask)
+	elif opts.mode == 'update':
+		update(opts.unmask)
 
 	return 0
 
