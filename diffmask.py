@@ -44,11 +44,13 @@ class MaskFile:
 
 		for l in data:
 			if l.startswith('#'):
-				if gotatoms:
+				newrepo = (l.startswith('## *') and l.endswith('*\n')) # repo name
+
+				if gotatoms or newrepo:
 					repo.AppendBlock(buf)
 					buf = []
 					gotatoms = False
-				if l.startswith('## *') and l.endswith('*\n'): # repo name
+				if newrepo:
 					repo = self.MaskRepo(l[4:-2])
 					self.repos.append(repo)
 					continue
