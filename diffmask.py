@@ -183,12 +183,12 @@ def update(unmaskpath):
 	unmask = MaskFile(open(unmaskpath, 'r').readlines())
 	cmp = UnmaskFileClean(mask, unmask)
 
-	# debug
-	tmp = tempfile.NamedTemporaryFile()
-	tmp.write(str(cmp))
-	tmp.flush()
-	os.system('diff -dupr %s %s' % (unmaskpath, tmp.name))
-	# /debug
+	newfn = portage.util.new_protect_filename(unmaskpath)
+	newf = open(newfn, 'w')
+	newf.write(str(cmp))
+	newf.close()
+
+	print 'New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn
 
 def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
