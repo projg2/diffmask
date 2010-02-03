@@ -13,26 +13,28 @@ import portage
 class Suicide:
 	pass
 
-global i
-i = 0
-
 class MaskFile:
 	class MaskRepo:
 		class MaskBlock:
 			def __str__(self):
-				return ''.join(self.before + self.atoms + self.after)
+				return ''.join(self.before + self.comment + self.atoms + self.after)
 
 			def __init__(self, data):
 				self.before = []
+				self.comment = []
 				self.atoms = []
 				self.after = []
 
 				for l in data:
-					if l.startswith('#') or l.strip() == '':
-						if len(self.atoms) == 0:
+					if len(self.atoms) == 0:
+						if len(self.comment) == 0 and l.strip() == '':
 							self.before.append(l)
+						elif l.startswith('#') or l.strip() == '':
+							self.comment.append(l)
 						else:
-							self.after.append(l)
+							self.atoms.append(l)
+					elif l.startswith('#') or l.strip() == '':
+						self.after.append(l)
 					else:
 						self.atoms.append(l)
 
@@ -100,11 +102,47 @@ class MaskFile:
 class UnmaskFileClean:
 	class UnmaskRepoClean:
 		def __str__(self):
-			return str(self.unmaskrepo)
+			out = []
+			if self.name:
+				out.append('\n## *%s*\n\n' % self.name)
+			out.extend([str(x) for x in self.blocks])
+			return ''.join(out)
 
 		def __init__(self, maskr, unmaskr):
-			self.maskrepo = maskr
-			self.unmaskrepo = unmaskr
+			self.name = unmaskr.name
+			self.blocks = []
+			tblocks = []
+
+			for b in unmaskr.blocks:
+				# first try to get exact match
+				for cb in maskr.blocks:
+					if cb.comment == b.comment and cb.atoms == b.atoms:
+						tblocks.append(cb)
+						break
+				else:
+					# then try partial matches
+					for cb in maskr.blocks:
+						if cb.comment == b.comment:
+							tblocks.append(cb)
+							break
+					for a in b.atoms:
+						for cb in maskr.blocks:
+							if a in cb.atoms:
+								tblocks.append(cb)
+								break
+
+			# sort & unify, now we have to get exact matches
+			for b in tblocks:
+				for cb in maskr.blocks:
+					if cb.comment == b.comment and cb.atoms == b.atoms:
+						for ub in self.blocks: # unify
+							if cb.comment == ub.comment and cb.atoms == ub.atoms:
+								break
+						else:
+							self.blocks.append(cb)
+						break
+				else:
+					raise AssertionError('Match failed in sorting loop')
 
 	def __str__(self):
 		return ''.join([str(x) for x in self.repos])
