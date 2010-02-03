@@ -7,8 +7,7 @@ MY_PN='diffmask'
 MY_PV='0.3'
 
 import os, os.path, sys, tempfile
-from optparse import OptionParser, OptionGroup
-
+import optparse
 import portage
 
 class MaskMerge:
@@ -89,14 +88,14 @@ def vimdiff(vimdiffcmd, unmaskpath):
 
 def main(argv):
 	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
-	parser = OptionParser(version=MY_PV, usage='%prog <action> [options]')
+	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
 
-	gr = OptionGroup(parser, 'Actions')
+	gr = optparse.OptionGroup(parser, 'Actions')
 	gr.add_option('-v', '--vimdiff', action='store_const',
 			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
 	parser.add_option_group(gr)
 
-	gr = OptionGroup(parser, 'Options related to vimdiff')
+	gr = optparse.OptionGroup(parser, 'Options related to vimdiff')
 	gr.add_option('--vimdiffcmd', action='store',
 			dest='vimdiff', default='vimdiff', help='vimdiff command')
 	gr.add_option('-u', '--unmask-file', action='store',
