@@ -275,6 +275,43 @@ def vimdiff(vimdiffcmd, unmaskpath):
 	t.flush()
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
 
+def add(pkgs, unmaskpath):
+	""" Unmask specified packages. """
+	unmask = MaskFile(open(unmaskpath, 'r').readlines())
+	nonerepo = unmask.GetRepo(None)
+
+	for pkg in pkgs:
+		matches = portage.portdb.xmatch('match-all', pkg)
+		if len(matches) == 0:
+			print 'No packages match %s.' % pkg
+			return
+
+		while len(matches) > 0:
+			bm = portage.best(matches)
+			ms = portage.getmaskingstatus(bm)
+
+			if len(ms) == 0:
+				print '%s is visible, skipping.' % bm
+			elif 'package.mask' not in ms or len(ms) > 1:
+				print '%s is masked by: %s; skipping.' % (bm, ', '.join(ms))
+			else:
+				mr = portage.getmaskingreason(bm).splitlines(True)
+				if not mr[0].startswith('#'):
+					raise AssertionError("portage.getmaskingreason() didn't return a comment")
+
+				# getmaskingreason() can sometime provide a broken comment
+				# so let's hope it or =pkg match will occur
+				mr.append('=%s\n' % bm)
+				nonerepo.AppendBlock(mr)
+				break
+
+			matches.remove(bm)
+		else:
+			print 'No packages matching %s and being only package.mask-masked were found.' % pkg
+
+	# XXX: perform the changes
+	print nonerepo
+
 def main(argv):
 	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
@@ -283,6 +320,8 @@ def main(argv):
 			help='package.unmask file location (default: %s)' % defpunmask)
 
 	gr = optparse.OptionGroup(parser, 'Actions')
+	gr.add_option('-a', '--add', action='store_const',
+			dest='mode', const='add', help=add.__doc__.strip())
 	gr.add_option('-u', '--update', action='store_const',
 			dest='mode', const='update', help=update.__doc__.strip())
 	gr.add_option('-v', '--vimdiff', action='store_const',
@@ -307,6 +346,11 @@ def main(argv):
 		vimdiff(opts.vimdiff, opts.unmask)
 	elif opts.mode == 'update':
 		update(opts.unmask)
+	elif opts.mode == 'add':
+		if len(args) == 0:
+			print '--add requires at least one package name.'
+			return 2
+		add(args, opts.unmask)
 
 	return 0
 
