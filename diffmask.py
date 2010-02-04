@@ -251,10 +251,13 @@ class MaskMerge:
 		self.data = []
 		self.ProcessAll()
 
-def update(unmaskpath):
+def update(unmaskpath, unmaskfile = None):
 	""" Update unmasks according to current package.mask file and remove old ones. """
 	mask = MaskFile(MaskMerge().GetLines())
-	unmask = MaskFile(open(unmaskpath, 'r').readlines())
+	if unmaskfile is not None:
+		unmask = unmaskfile
+	else:
+		unmask = MaskFile(open(unmaskpath, 'r').readlines())
 	cmp = UnmaskFileClean(mask, unmask)
 
 	scmp = str(cmp)
@@ -295,13 +298,14 @@ def add(pkgs, unmaskpath):
 			elif 'package.mask' not in ms or len(ms) > 1:
 				print '%s is masked by: %s; skipping.' % (bm, ', '.join(ms))
 			else:
-				mr = portage.getmaskingreason(bm).splitlines(True)
+				mr = str(portage.getmaskingreason(bm)).splitlines(True)
 				if not mr[0].startswith('#'):
 					raise AssertionError("portage.getmaskingreason() didn't return a comment")
 
+				print 'Trying to unmask %s.' % bm
 				# getmaskingreason() can sometime provide a broken comment
 				# so let's hope it or =pkg match will occur
-				mr.append('=%s\n' % bm)
+				mr.extend(['=%s\n' % bm, '\n'])
 				nonerepo.AppendBlock(mr)
 				break
 
@@ -309,8 +313,7 @@ def add(pkgs, unmaskpath):
 		else:
 			print 'No packages matching %s and being only package.mask-masked were found.' % pkg
 
-	# XXX: perform the changes
-	print nonerepo
+	update(unmaskpath, unmask)
 
 def main(argv):
 	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
