@@ -262,13 +262,13 @@ def update(unmaskpath, unmaskfile = None):
 
 	scmp = str(cmp)
 	if scmp.strip() == str(unmask).strip():
-		print 'The unmask file is up-to-date.'
+		print('The unmask file is up-to-date.')
 	else:
 		newfn = portage.util.new_protect_filename(unmaskpath)
 		newf = open(newfn, 'w')
 		newf.write(str(cmp))
 
-		print 'New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn
+		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
 
 def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
@@ -286,7 +286,7 @@ def add(pkgs, unmaskpath):
 	for pkg in pkgs:
 		matches = portage.portdb.xmatch('match-all', pkg)
 		if len(matches) == 0:
-			print 'No packages match %s.' % pkg
+			print('No packages match %s.' % pkg)
 			return
 
 		while len(matches) > 0:
@@ -294,15 +294,15 @@ def add(pkgs, unmaskpath):
 			ms = portage.getmaskingstatus(bm)
 
 			if len(ms) == 0:
-				print '%s is visible, skipping.' % bm
+				print('%s is visible, skipping.' % bm)
 			elif 'package.mask' not in ms or len(ms) > 1:
-				print '%s is masked by: %s; skipping.' % (bm, ', '.join(ms))
+				print('%s is masked by: %s; skipping.' % (bm, ', '.join(ms)))
 			else:
 				mr = str(portage.getmaskingreason(bm)).splitlines(True)
 				if not mr[0].startswith('#'):
 					raise AssertionError("portage.getmaskingreason() didn't return a comment")
 
-				print 'Trying to unmask %s.' % bm
+				print('Trying to unmask %s.' % bm)
 				# getmaskingreason() can sometime provide a broken comment
 				# so let's hope it or =pkg match will occur
 				mr.extend(['=%s\n' % bm, '\n'])
@@ -311,7 +311,7 @@ def add(pkgs, unmaskpath):
 
 			matches.remove(bm)
 		else:
-			print 'No packages matching %s and being only package.mask-masked were found.' % pkg
+			print('No packages matching %s and being only package.mask-masked were found.' % pkg)
 
 	update(unmaskpath, unmask)
 
@@ -351,7 +351,7 @@ def main(argv):
 		update(opts.unmask)
 	elif opts.mode == 'add':
 		if len(args) == 0:
-			print '--add requires at least one package name.'
+			print('--add requires at least one package name.')
 			return 2
 		add(args, opts.unmask)
 
