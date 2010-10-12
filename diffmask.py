@@ -6,7 +6,7 @@
 MY_PN='diffmask'
 MY_PV='0.3'
 
-import os, os.path, sys, tempfile
+import codecs, os, os.path, sys, tempfile
 import optparse
 import portage
 
@@ -207,12 +207,12 @@ class MaskMerge:
 
 	def ProcessRepo(self, path):
 		try:
-			maskf = open('%s/profiles/package.mask' % path, 'r')
+			maskf = codecs.open('%s/profiles/package.mask' % path, 'r', 'utf8')
 		except IOError:
 			pass
 		else:
 			try:
-				namef = open('%s/profiles/repo_name' % path, 'r')
+				namef = codecs.open('%s/profiles/repo_name' % path, 'r', 'utf8')
 				reponame = namef.readline().strip()
 			except IOError:
 				reponame = os.path.basename(path)
@@ -227,7 +227,7 @@ class MaskMerge:
 	def ProcessProfiles(self):
 		for p in portage.settings.profiles:
 			try:
-				maskf = open('%s/package.mask' % p, 'r')
+				maskf = codecs.open('%s/package.mask' % p, 'r', 'utf8')
 			except IOError:
 				pass
 			else:
@@ -257,7 +257,7 @@ def update(unmaskpath, unmaskfile = None):
 	if unmaskfile is not None:
 		unmask = unmaskfile
 	else:
-		unmask = MaskFile(open(unmaskpath, 'r').readlines())
+		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
 	cmp = UnmaskFileClean(mask, unmask)
 
 	scmp = str(cmp)
@@ -265,7 +265,7 @@ def update(unmaskpath, unmaskfile = None):
 		print('The unmask file is up-to-date.')
 	else:
 		newfn = portage.util.new_protect_filename(unmaskpath)
-		newf = open(newfn, 'w')
+		newf = codecs.open(newfn, 'w', 'utf8')
 		newf.write(str(cmp))
 
 		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
@@ -274,13 +274,13 @@ def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
 	m = MaskMerge()
 	t = tempfile.NamedTemporaryFile()
-	t.write(str(m))
+	t.write(str(m).encode('utf8'))
 	t.flush()
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
 
 def add(pkgs, unmaskpath):
 	""" Unmask specified packages. """
-	unmask = MaskFile(open(unmaskpath, 'r').readlines())
+	unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
 	nonerepo = unmask.GetRepo(None)
 
 	for pkg in pkgs:
