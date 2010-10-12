@@ -207,12 +207,12 @@ class MaskMerge:
 
 	def ProcessRepo(self, path):
 		try:
-			maskf = codecs.open('%s/profiles/package.mask' % path, 'r', 'utf8')
+			maskf = codecs.open(os.path.join(path, 'profiles', 'package.mask'), 'r', 'utf8')
 		except IOError:
 			pass
 		else:
 			try:
-				namef = codecs.open('%s/profiles/repo_name' % path, 'r', 'utf8')
+				namef = codecs.open(os.path.join(path, 'profiles', 'repo_name'), 'r', 'utf8')
 				reponame = namef.readline().strip()
 			except IOError:
 				reponame = os.path.basename(path)
@@ -227,11 +227,11 @@ class MaskMerge:
 	def ProcessProfiles(self):
 		for p in portage.settings.profiles:
 			try:
-				maskf = codecs.open('%s/package.mask' % p, 'r', 'utf8')
+				maskf = codecs.open(os.path.join(p, 'package.mask'), 'r', 'utf8')
 			except IOError:
 				pass
 			else:
-				profname = 'profile: %s' % os.path.relpath(p, '%s/profiles' % self.portdir)
+				profname = 'profile: %s' % os.path.relpath(p, os.path.join(self.portdir, 'profiles'))
 				self.ProcessMaskFile(maskf, profname)
 
 	def ProcessAll(self):
@@ -316,7 +316,8 @@ def add(pkgs, unmaskpath):
 	update(unmaskpath, unmask)
 
 def main(argv):
-	defpunmask = '%setc/portage/package.unmask' % portage.settings['PORTAGE_CONFIGROOT']
+	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
+			'etc', 'portage', 'package.unmask')
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
 	parser.add_option('-U', '--unmask-file', action='store',
 			dest='unmask', default=defpunmask,
