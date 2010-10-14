@@ -16,7 +16,7 @@ class MaskFile:
 			def __eq__(self, other):
 				return (self.comment == other.comment and self.atoms == other.atoms)
 
-			def __str__(self):
+			def toString(self):
 				return ''.join(self.before + self.comment + self.atoms + self.after)
 
 			def __init__(self, data):
@@ -41,11 +41,11 @@ class MaskFile:
 		def AppendBlock(self, data):
 			self.blocks.append(self.MaskBlock(data))
 
-		def __str__(self):
+		def toString(self):
 			out = []
 			if self.name:
 				out.append('\n## *%s*\n\n' % self.name)
-			out.extend([str(x) for x in self.blocks])
+			out.extend([x.toString() for x in self.blocks])
 			return ''.join(out)
 
 		def __init__(self, name):
@@ -58,8 +58,8 @@ class MaskFile:
 				return r
 		raise KeyError('No such repo')
 
-	def __str__(self):
-		return ''.join([str(x) for x in self.repos])
+	def toString(self):
+		return ''.join([x.toString() for x in self.repos])
 
 	def __init__(self, data):
 		repo = self.MaskRepo(None)
@@ -101,11 +101,11 @@ class MaskFile:
 
 class UnmaskFileClean:
 	class UnmaskRepoClean:
-		def __str__(self):
+		def toString(self):
 			out = []
 			if self.name:
 				out.append('\n## *%s*\n\n' % self.name)
-			out.extend([str(x) for x in self.blocks])
+			out.extend([x.toString() for x in self.blocks])
 			return ''.join(out)
 
 		def __init__(self, maskr, unmaskr, noner):
@@ -153,8 +153,8 @@ class UnmaskFileClean:
 				else:
 					raise AssertionError('Match failed in sorting loop')
 
-	def __str__(self):
-		return ''.join([str(x) for x in self.repos])
+	def toString(self):
+		return ''.join([x.toString() for x in self.repos])
 
 	def __init__(self, mask, unmask):
 		""" Update and cleanup 'unmask' file to match 'mask' file. """
@@ -241,7 +241,7 @@ class MaskMerge:
 		self.ProcessProfiles()
 		self.ProcessRepo(self.portdir)
 
-	def __str__(self):
+	def toString(self):
 		return ''.join(self.data)
 
 	def GetLines(self):
@@ -274,7 +274,7 @@ def vimdiff(vimdiffcmd, unmaskpath):
 	""" vimdiff merged package.mask with package.unmask. """
 	m = MaskMerge()
 	t = tempfile.NamedTemporaryFile()
-	t.write(str(m).encode('utf8'))
+	t.write(m.toString().encode('utf8'))
 	t.flush()
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
 
