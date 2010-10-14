@@ -260,13 +260,13 @@ def update(unmaskpath, unmaskfile = None):
 		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
 	cmp = UnmaskFileClean(mask, unmask)
 
-	scmp = str(cmp)
-	if scmp.strip() == str(unmask).strip():
+	scmp = cmp.toString()
+	if scmp.strip() == unmask.toString().strip():
 		print('The unmask file is up-to-date.')
 	else:
 		newfn = portage.util.new_protect_filename(unmaskpath)
 		newf = codecs.open(newfn, 'w', 'utf8')
-		newf.write(str(cmp))
+		newf.write(cmp.toString())
 
 		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
 
