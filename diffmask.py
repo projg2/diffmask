@@ -298,7 +298,7 @@ def add(pkgs, unmaskpath):
 			elif 'package.mask' not in ms or len(ms) > 1:
 				print('%s is masked by: %s; skipping.' % (bm, ', '.join(ms)))
 			else:
-				mr = str(portage.getmaskingreason(bm)).splitlines(True)
+				mr = portage.getmaskingreason(bm).splitlines(True)
 				if not mr[0].startswith('#'):
 					raise AssertionError("portage.getmaskingreason() didn't return a comment")
 
