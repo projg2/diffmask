@@ -256,8 +256,11 @@ def update(unmaskpath, unmaskfile = None):
 	mask = MaskFile(MaskMerge().GetLines())
 	if unmaskfile is not None:
 		unmask = unmaskfile
-	else:
+	elif os.path.exists(unmaskpath):
 		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
+	else:
+		unmask = MaskFile([])
+
 	cmp = UnmaskFileClean(mask, unmask)
 
 	scmp = cmp.toString()
@@ -265,6 +268,10 @@ def update(unmaskpath, unmaskfile = None):
 		print('The unmask file is up-to-date.')
 	else:
 		newfn = portage.util.new_protect_filename(unmaskpath)
+		# Always try hard to get a diff.
+		if newfn == unmaskpath:
+			open(newfn, 'w').close()
+			newfn = portage.util.new_protect_filename(unmaskpath)
 		newf = codecs.open(newfn, 'w', 'utf8')
 		newf.write(cmp.toString())
 
@@ -280,7 +287,10 @@ def vimdiff(vimdiffcmd, unmaskpath):
 
 def add(pkgs, unmaskpath):
 	""" Unmask specified packages. """
-	unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
+	if os.path.exists(unmaskpath):
+		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
+	else:
+		unmask = MaskFile([])
 	nonerepo = unmask.GetRepo(None)
 
 	for pkg in pkgs:
