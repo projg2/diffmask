@@ -318,10 +318,12 @@ def add(pkgs, unmaskpath):
 def main(argv):
 	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
 			'etc', 'portage', 'package.unmask')
+	if os.path.isdir(defpunmask):
+		defpunmask = os.path.join(defpunmask, 'diffmask')
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
 	parser.add_option('-U', '--unmask-file', action='store',
 			dest='unmask', default=defpunmask,
-			help='package.unmask file location (default: %s)' % defpunmask)
+			help='package.unmask file location')
 
 	gr = optparse.OptionGroup(parser, 'Actions')
 	gr.add_option('-a', '--add', action='store_const',
