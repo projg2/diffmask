@@ -98,6 +98,14 @@ class MaskFile:
 			except IndexError:
 				pass
 
+class UnmaskFile(MaskFile):
+	def __init__(self, path):
+		if os.path.exists(path):
+			data = codecs.open(path, 'r', 'utf8').readlines()
+		else:
+			data = []
+		MaskFile.__init__(self, data)
+
 class UnmaskFileClean:
 	class UnmaskRepoClean:
 		def toString(self):
@@ -240,15 +248,11 @@ class MaskMerge:
 		self.data = []
 		self.ProcessAll()
 
-def update(unmaskpath, unmaskfile = None):
+def update(unmaskpath, unmask = None):
 	""" Update unmasks according to current package.mask file and remove old ones. """
 	mask = MaskFile(MaskMerge().GetLines())
-	if unmaskfile is not None:
-		unmask = unmaskfile
-	elif os.path.exists(unmaskpath):
-		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
-	else:
-		unmask = MaskFile([])
+	if unmask is None:
+		unmask = UnmaskFile(unmaskpath)
 
 	cmp = UnmaskFileClean(mask, unmask)
 
@@ -276,10 +280,7 @@ def vimdiff(vimdiffcmd, unmaskpath):
 
 def add(pkgs, unmaskpath):
 	""" Unmask specified packages. """
-	if os.path.exists(unmaskpath):
-		unmask = MaskFile(codecs.open(unmaskpath, 'r', 'utf8').readlines())
-	else:
-		unmask = MaskFile([])
+	unmask = UnmaskFile(unmaskpath)
 	nonerepo = unmask.GetRepo(None)
 
 	for pkg in pkgs:
