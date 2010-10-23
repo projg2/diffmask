@@ -241,8 +241,11 @@ class MaskMerge:
 	def toString(self):
 		return ''.join(self.data)
 
-	def GetLines(self):
-		return self.data
+	def __len__(self):
+		return len(self.data)
+
+	def __getitem__(self, key):
+		return self.data[key]
 
 	def __init__(self):
 		self.data = []
@@ -250,7 +253,7 @@ class MaskMerge:
 
 def update(unmaskpath, unmask = None):
 	""" Update unmasks according to current package.mask file and remove old ones. """
-	mask = MaskFile(MaskMerge().GetLines())
+	mask = MaskFile(MaskMerge())
 	if unmask is None:
 		unmask = UnmaskFile(unmaskpath)
 
