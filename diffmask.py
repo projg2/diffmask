@@ -233,8 +233,6 @@ class MaskMerge:
 				self.ProcessMaskFile(maskf, profname)
 
 	def ProcessAll(self):
-		self.portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
-
 		self.ProcessRepos()
 		self.ProcessProfiles()
 
@@ -247,13 +245,14 @@ class MaskMerge:
 	def __getitem__(self, key):
 		return self.data[key]
 
-	def __init__(self):
+	def __init__(self, dbapi):
+		self.portdb = dbapi
 		self.data = []
 		self.ProcessAll()
 
-def update(unmaskpath, unmask = None):
+def update(unmaskpath, dbapi, unmask = None):
 	""" Update unmasks according to current package.mask file and remove old ones. """
-	mask = MaskFile(MaskMerge())
+	mask = MaskFile(MaskMerge(dbapi))
 	if unmask is None:
 		unmask = UnmaskFile(unmaskpath)
 
@@ -273,21 +272,21 @@ def update(unmaskpath, unmask = None):
 
 		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
 
-def vimdiff(vimdiffcmd, unmaskpath):
+def vimdiff(vimdiffcmd, unmaskpath, dbapi):
 	""" vimdiff merged package.mask with package.unmask. """
-	m = MaskMerge()
+	m = MaskMerge(dbapi)
 	t = tempfile.NamedTemporaryFile()
 	t.write(m.toString().encode('utf8'))
 	t.flush()
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
 
-def add(pkgs, unmaskpath):
+def add(pkgs, unmaskpath, dbapi):
 	""" Unmask specified packages. """
 	unmask = UnmaskFile(unmaskpath)
 	nonerepo = unmask.GetRepo(None)
 
 	for pkg in pkgs:
-		matches = portage.portdb.xmatch('match-all', pkg)
+		matches = dbapi.xmatch('match-all', pkg)
 		if len(matches) == 0:
 			print('No packages match %s.' % pkg)
 			return
@@ -316,7 +315,7 @@ def add(pkgs, unmaskpath):
 		else:
 			print('No packages matching %s and being only package.mask-masked were found.' % pkg)
 
-	update(unmaskpath, unmask)
+	update(unmaskpath, dbapi, unmask)
 
 def main(argv):
 	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
@@ -351,15 +350,16 @@ def main(argv):
 			parser.print_help()
 			return 2
 
+	portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
 	if opts.mode == 'vimdiff':
-		vimdiff(opts.vimdiff, opts.unmask)
+		vimdiff(opts.vimdiff, opts.unmask, dbapi = portdb)
 	elif opts.mode == 'update':
-		update(opts.unmask)
+		update(opts.unmask, dbapi = portdb)
 	elif opts.mode == 'add':
 		if len(args) == 0:
-			print('--add requires at least one package name.')
+			print('--add requires at least a single package name.')
 			return 2
-		add(args, opts.unmask)
+		add(args, opts.unmask, dbapi = portdb)
 
 	return 0
 
