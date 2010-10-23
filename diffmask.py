@@ -6,8 +6,7 @@
 MY_PN='diffmask'
 MY_PV='0.3'
 
-import codecs, os, os.path, sys, tempfile
-import optparse
+import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
 class MaskFile:
