@@ -1,0 +1,81 @@
+diffmask -- a clean package.unmask handling helper
+==================================================
+
+Use
+---
+
+diffmask should be called with one of the following actions:
+
+* `-a` or `--add` to unmask one or more packages passed as arguments,
+* `-u` or `--update` to try to sync unmasks with `package.mask` files,
+* `-v` or `--vimdiff` in order to vimdiff a merged `package.mask` file
+	with the `package.unmask` file.
+
+All of them can be combined with `--unmask-file` specifying an alternate
+`package.unmask` file location. If that option is not specified, diffmask
+defaults to either using `/etc/portage/package.unmask` or
+`/etc/portage/package.unmask/diffmask` if the former is a directory.
+
+
+The `add` action
+----------------
+
+When the `add` action is used, diffmask uses the Portage API to find
+masked packages matching the passed atoms. If a particular matching
+package is masked using `package.mask` (and `package.mask` only), diffmask
+tries to match it with existing `package.mask` files and implicitly calls
+the `update` action.
+
+Thus, if you would like to try development snapshots of Opera, you'd
+call:
+
+	diffmask -a opera
+
+If you would like diffmask to unmask a package which is masked both
+using `package.mask` and because of missing keywords, you need to add it
+to your `package.keywords` first, e.g. using:
+
+	flagedit foo -- '**'
+
+
+The `update` action
+-------------------
+
+The `update` action is supposed to help keeping a clean and up-to-date
+`package.unmask` file using various `package.mask` files. It assumes that
+each entry in the former file is supposed to correspond to a similar
+entry in one of the `package.mask` files.
+
+Thus, it tries to match all of the `package.unmask` file entries with
+an entry in `package.mask` file. If a match occurs, the `package.unmask`
+entry is updated as necessary. Otherwise, it is removed.
+
+In other words, if you have unmasked the development snapshots of Opera,
+and the package maintainer has added a new snapshot and added it
+to the masking entry, you call:
+
+	diffmask -u
+
+And the new version should be unmasked as well. Feel free to call that
+from within your `postsync.d`.
+
+Please note, however, that the `update` action is going to remove all
+unmatched entries. This is required to remove outdated unmask entries
+(e.g. when a package was masked for testing and is no longer masked). If
+you'd like to keep an additional (unmatching) `package.unmask` entries,
+please make your `/etc/portage/package.unmask` a directory and keep them
+in a file different than `diffmask`, e.g.:
+
+	mv /etc/portage/package.unmask /tmp/custom-unmasks
+	mkdir /etc/portage/package.unmask
+	mv /tmp/custom-unmasks /etc/portage/package.unmask/
+
+
+The `vimdiff` action
+--------------------
+
+The `vimdiff` action merges all `package.mask` files applying
+at the moment to a temporary file and calls `vimdiff` to compare-edit it
+with your `package.unmask` file.
+
+<!-- vim:se syn=markdown : -->
