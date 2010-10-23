@@ -204,24 +204,15 @@ class MaskMerge:
 		self.data.extend(['\n', '## *%s*\n' % header, '\n'])
 		self.data.extend(mf)
 
-	def ProcessRepo(self, path):
-		try:
-			maskf = codecs.open(os.path.join(path, 'profiles', 'package.mask'), 'r', 'utf8')
-		except IOError:
-			pass
-		else:
+	def ProcessRepos(self):
+		for o in self.portdb.getRepositories():
+			path = self.portdb.getRepositoryPath(o)
 			try:
-				namef = codecs.open(os.path.join(path, 'profiles', 'repo_name'), 'r', 'utf8')
-				reponame = namef.readline().strip()
+				maskf = codecs.open(os.path.join(path, 'profiles', 'package.mask'), 'r', 'utf8')
 			except IOError:
-				reponame = os.path.basename(path)
-
-			self.ProcessMaskFile(maskf, reponame)
-
-	def ProcessOverlays(self):
-		overlays = portage.settings['PORTDIR_OVERLAY'].split()
-		for o in overlays:
-			self.ProcessRepo(o)
+				pass
+			else:
+				self.ProcessMaskFile(maskf, o)
 
 	def ProcessProfiles(self):
 		for p in portage.settings.profiles:
@@ -230,15 +221,14 @@ class MaskMerge:
 			except IOError:
 				pass
 			else:
-				profname = 'profile: %s' % os.path.relpath(p, os.path.join(self.portdir, 'profiles'))
+				profname = 'profile: %s' % os.path.relpath(p, os.path.join(self.portdb.porttree_root, 'profiles'))
 				self.ProcessMaskFile(maskf, profname)
 
 	def ProcessAll(self):
-		self.portdir = portage.settings['PORTDIR']
+		self.portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
 
-		self.ProcessOverlays()
+		self.ProcessRepos()
 		self.ProcessProfiles()
-		self.ProcessRepo(self.portdir)
 
 	def toString(self):
 		return ''.join(self.data)
