@@ -9,6 +9,9 @@ MY_PV='0.3.1'
 import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
+from portage.dep import Atom
+from portage.exception import InvalidAtom
+
 def toString(obj):
 	if hasattr(obj, 'toString'):
 		return obj.toString()
@@ -33,11 +36,32 @@ class MaskFile(DiffmaskList):
 			""" A single block of package.mask file. Basically a list of
 				atoms, keeping the comments as well. """
 
+			class MaskAtom:
+				def __init__(self, s):
+					# XXX: Read and pass the EAPI
+					try:
+						self.atom = Atom(s, allow_wildcard = True)
+					except InvalidAtom:
+						self.atom = s
+					else:
+						if self.atom != s:
+							raise AssertionError('Atom(%s) stringifies to %s' \
+									% (s.rstrip(), self.atom.rstrip()))
+
+				def toString(self):
+					return self.atom
+
 			def __eq__(self, other):
 				return (self.comment == other.comment and DiffmaskList.__eq__(self, other))
 
 			def toString(self):
-				return ''.join(self.before + self.comment + self + self.after)
+				l = [DiffmaskList.toString(self)]
+				return ''.join(self.before + self.comment + l + self.after)
+
+			def append(self, data):
+				if not isinstance(data, self.MaskAtom):
+					data = self.MaskAtom(data)
+				DiffmaskList.append(self, data)
 
 			def __init__(self, data):
 				DiffmaskList.__init__(self)
