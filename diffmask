@@ -9,10 +9,16 @@ MY_PV='0.3.1'
 import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
+def toString(obj):
+	if hasattr(obj, 'toString'):
+		return obj.toString()
+	else:
+		return obj
+
 class DiffmaskList(list):
 	""" A list class extended with a simple toString() method. """
 	def toString(self):
-		return ''.join(self)
+		return ''.join([toString(x) for x in self])
 
 class MaskFile:
 	class MaskRepo(DiffmaskList):
