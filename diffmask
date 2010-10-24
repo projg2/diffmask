@@ -9,6 +9,11 @@ MY_PV='0.3.1'
 import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
+class DiffmaskList(list):
+	""" A list class extended with a simple toString() method. """
+	def toString(self):
+		return ''.join(self)
+
 class MaskFile:
 	class MaskRepo:
 		class MaskBlock:
@@ -189,7 +194,7 @@ class UnmaskFileClean:
 
 		# repos which are only in unmask file are dropped implicitly
 
-class MaskMerge:
+class MaskMerge(DiffmaskList):
 	def ProcessMaskFile(self, file, header):
 		mf = file.readlines()
 
@@ -209,8 +214,8 @@ class MaskMerge:
 					del mf[:ccb]
 				break
 
-		self.data.extend(['\n', '## *%s*\n' % header, '\n'])
-		self.data.extend(mf)
+		self.extend(['\n', '## *%s*\n' % header, '\n'])
+		self.extend(mf)
 
 	def ProcessRepos(self):
 		for o in self.portdb.getRepositories():
@@ -236,18 +241,8 @@ class MaskMerge:
 		self.ProcessRepos()
 		self.ProcessProfiles()
 
-	def toString(self):
-		return ''.join(self.data)
-
-	def __len__(self):
-		return len(self.data)
-
-	def __getitem__(self, key):
-		return self.data[key]
-
 	def __init__(self, dbapi):
 		self.portdb = dbapi
-		self.data = []
 		self.ProcessAll()
 
 def update(unmaskpath, dbapi, unmask = None):
