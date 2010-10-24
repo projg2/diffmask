@@ -27,7 +27,7 @@ class MaskFile:
 				return ''.join(self.before + self.comment + self + self.after)
 
 			def __init__(self, data):
-				DiffmaskList.__init__(self, [])
+				DiffmaskList.__init__(self)
 				self.before = []
 				self.comment = []
 				self.after = []
@@ -56,7 +56,7 @@ class MaskFile:
 			return ''.join(out)
 
 		def __init__(self, name):
-			DiffmaskList.__init__(self, [])
+			DiffmaskList.__init__(self)
 			self.name = name
 
 	def GetRepo(self, name):
