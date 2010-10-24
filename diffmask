@@ -20,6 +20,13 @@ class DiffmaskList(list):
 	def toString(self):
 		return ''.join([toString(x) for x in self])
 
+	def find(self, key):
+		for e in self:
+			if e == key:
+				return e
+		else:
+			return None
+
 class MaskFile(DiffmaskList):
 	class MaskRepo(DiffmaskList):
 		class MaskBlock(DiffmaskList):
@@ -139,34 +146,29 @@ class UnmaskFileClean:
 
 			for b in inblocks:
 				# first try to get exact match
-				for cb in maskr:
-					if cb == b:
-						tblocks.append(cb)
-						break
+				cb = maskr.find(b)
+				if cb is not None:
+					tblocks.append(cb)
 				else:
 					# then try partial matches
+					# (both comment & atoms as they might come
+					# from a set of different masks)
 					for cb in maskr:
 						if cb.comment == b.comment:
 							tblocks.append(cb)
-							break
-					for a in b:
-						for cb in maskr:
+							continue
+						for a in b:
 							if a in cb:
 								tblocks.append(cb)
 								break
 
-			# sort & unify, now we have to get exact matches
+			# sort & uniq, now we have to get exact matches
 			for b in tblocks:
-				for cb in maskr:
-					if cb == b:
-						for ub in self: # unify
-							if cb == ub:
-								break
-						else:
-							self.append(cb)
-						break
-				else:
+				cb = maskr.find(b)
+				if cb is None:
 					raise AssertionError('Match failed in sorting loop')
+				elif self.find(cb) is None: # avoid duplicates
+					self.append(cb)
 
 	def toString(self):
 		return ''.join([x.toString() for x in self.repos])
