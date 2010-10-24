@@ -152,8 +152,23 @@ class UnmaskFile(MaskFile):
 		else:
 			data = []
 		MaskFile.__init__(self, data)
+		self.path = path
 
-class UnmaskFileClean(MaskFile):
+	def write(self, path = None):
+		if path is None:
+			path = self.path
+
+		newfn = portage.util.new_protect_filename(path)
+		# Always try hard to get a diff.
+		if newfn == path:
+			open(newfn, 'w').close()
+			newfn = portage.util.new_protect_filename(path)
+		newf = codecs.open(newfn, 'w', 'utf8')
+		newf.write(self.toString())
+
+		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
+
+class UnmaskFileClean(UnmaskFile):
 	class UnmaskRepoClean(MaskFile.MaskRepo):
 		def __init__(self, maskr, unmaskr, noner):
 			""" Try to match blocks in unmaskr (unmask entries associated with repo)
@@ -197,6 +212,7 @@ class UnmaskFileClean(MaskFile):
 	def __init__(self, mask, unmask):
 		""" Update and cleanup 'unmask' file to match 'mask' file. """
 		DiffmaskList.__init__(self)
+		self.path = unmask.path
 
 		# find the repo containing unmatched entries
 		# (in fact it should be always the first one but better safe than sorry)
@@ -277,19 +293,10 @@ def update(unmaskpath, dbapi, unmask = None):
 
 	cmp = UnmaskFileClean(mask, unmask)
 
-	scmp = cmp.toString()
-	if scmp.strip() == unmask.toString().strip():
+	if cmp.toString().strip() == unmask.toString().strip():
 		print('The unmask file is up-to-date.')
 	else:
-		newfn = portage.util.new_protect_filename(unmaskpath)
-		# Always try hard to get a diff.
-		if newfn == unmaskpath:
-			open(newfn, 'w').close()
-			newfn = portage.util.new_protect_filename(unmaskpath)
-		newf = codecs.open(newfn, 'w', 'utf8')
-		newf.write(cmp.toString())
-
-		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
+		cmp.write()
 
 def vimdiff(vimdiffcmd, unmaskpath, dbapi):
 	""" vimdiff merged package.mask with package.unmask. """
