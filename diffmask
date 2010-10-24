@@ -16,31 +16,34 @@ class DiffmaskList(list):
 
 class MaskFile:
 	class MaskRepo:
-		class MaskBlock:
+		class MaskBlock(DiffmaskList):
+			""" A single block of package.mask file. Basically a list of
+				atoms, keeping the comments as well. """
+
 			def __eq__(self, other):
-				return (self.comment == other.comment and self.atoms == other.atoms)
+				return (self.comment == other.comment and DiffmaskList.__eq__(self, other))
 
 			def toString(self):
-				return ''.join(self.before + self.comment + self.atoms + self.after)
+				return ''.join(self.before + self.comment + self + self.after)
 
 			def __init__(self, data):
+				DiffmaskList.__init__(self, [])
 				self.before = []
 				self.comment = []
-				self.atoms = []
 				self.after = []
 
 				for l in data:
-					if len(self.atoms) == 0:
+					if len(self) == 0:
 						if len(self.comment) == 0 and l.strip() == '':
 							self.before.append(l)
 						elif l.startswith('#') or l.strip() == '':
 							self.comment.append(l)
 						else:
-							self.atoms.append(l)
+							self.append(l)
 					elif l.startswith('#') or l.strip() == '':
 						self.after.append(l)
 					else:
-						self.atoms.append(l)
+						self.append(l)
 
 		def AppendBlock(self, data):
 			self.blocks.append(self.MaskBlock(data))
@@ -146,9 +149,9 @@ class UnmaskFileClean:
 						if cb.comment == b.comment:
 							tblocks.append(cb)
 							break
-					for a in b.atoms:
+					for a in b:
 						for cb in maskr.blocks:
-							if a in cb.atoms:
+							if a in cb:
 								tblocks.append(cb)
 								break
 
