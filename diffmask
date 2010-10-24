@@ -399,7 +399,44 @@ def add(pkgs, unmaskpath, dbapi):
 			matches.remove(bm)
 		else:
 			print("No '%s' suitable for unmasking found." % pkg)
-	
+
+	if modified:
+		unmask.write()
+
+def delete(pkgs, unmaskpath, dbapi):
+	""" Delete unmask entries for specified packages. """
+	unmask = UnmaskFile(unmaskpath)
+	modified = False
+
+	for pkg in pkgs:
+		matches = dbapi.xmatch('match-visible', pkg)
+		if len(matches) == 0:
+			print('No packages match %s.' % pkg)
+			return
+
+		skipping = False
+		while len(matches) > 0:
+			bm = portage.best(matches)
+
+			try:
+				(r, b) = find_cpv_match(unmask, bm, dbapi = dbapi)
+			except ValueError:
+				print('No mask for %s found.' % bm)
+			else:
+				print('Removing unmask for %s.' % bm)
+				r.remove(b)
+
+				# Feel free to remove an empty repository.
+				if not r:
+					unmask.remove(r)
+
+				modified = True
+				break
+
+			matches.remove(bm)
+		else:
+			print("No '%s' suitable for un-unmasking found." % pkg)
+
 	if modified:
 		unmask.write()
 
@@ -416,6 +453,8 @@ def main(argv):
 	gr = optparse.OptionGroup(parser, 'Actions')
 	gr.add_option('-a', '--add', action='store_const',
 			dest='mode', const='add', help=add.__doc__.strip())
+	gr.add_option('-d', '--delete', action='store_const',
+			dest='mode', const='delete', help=delete.__doc__.strip())
 	gr.add_option('-u', '--update', action='store_const',
 			dest='mode', const='update', help=update.__doc__.strip())
 	gr.add_option('-v', '--vimdiff', action='store_const',
@@ -446,6 +485,11 @@ def main(argv):
 			print('--add requires at least a single package name.')
 			return 2
 		add(args, opts.unmask, dbapi = portdb)
+	elif opts.mode == 'delete':
+		if len(args) == 0:
+			print('--delete requires at least a single package name.')
+			return 2
+		delete(args, opts.unmask, dbapi = portdb)
 
 	return 0
 
