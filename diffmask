@@ -67,11 +67,14 @@ class MaskFile(DiffmaskList):
 			DiffmaskList.__init__(self)
 			self.name = name
 
-	def GetRepo(self, name):
-		for r in self:
-			if r.name == name:
-				return r
-		raise KeyError('No such repo')
+	def __getitem__(self, name):
+		if isinstance(name, int):
+			return DiffmaskList.__getitem__(self, name)
+		else:
+			for r in self:
+				if r.name == name:
+					return r
+			raise KeyError('No such repo')
 
 	def __init__(self, data):
 		repo = self.MaskRepo(None)
@@ -192,7 +195,7 @@ class UnmaskFileClean:
 		for mr in mask:
 			if mr.name is not None:
 				try:
-					r = unmask.GetRepo(mr.name)
+					r = unmask[mr.name]
 				except KeyError: # repo only in mask file
 					r = None
 
@@ -286,7 +289,7 @@ def vimdiff(vimdiffcmd, unmaskpath, dbapi):
 def add(pkgs, unmaskpath, dbapi):
 	""" Unmask specified packages. """
 	unmask = UnmaskFile(unmaskpath)
-	nonerepo = unmask.GetRepo(None)
+	nonerepo = unmask[None]
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-all', pkg)
