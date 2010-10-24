@@ -357,9 +357,12 @@ def add(pkgs, unmaskpath, dbapi):
 						for b in r:
 							yield (r, b)
 
+				slot = dbapi.aux_get(bm, ['SLOT'])[0]
+				cpv = '%s:%s' % (bm, slot) if slot else bm
+
 				match = None
 				for r, b in repo_iter(mask):
-					if bm in b:
+					if cpv in b:
 						match = (r, b)
 						# getmaskingreason() can sometime provide a broken comment,
 						# so don't require a match (but prefer one)
