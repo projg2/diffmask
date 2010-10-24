@@ -290,9 +290,9 @@ def add(pkgs, unmaskpath, dbapi):
 			bm = portage.best(matches)
 			ms = portage.getmaskingstatus(bm)
 
-			if len(ms) == 0:
+			if not ms:
 				print('%s is visible, skipping.' % bm)
-			elif 'package.mask' not in ms or len(ms) > 1:
+			elif ms != ['package.mask']:
 				print('%s is masked by: %s; skipping.' % (bm, ', '.join(ms)))
 			else:
 				mr = portage.getmaskingreason(bm).splitlines(True)
