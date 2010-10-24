@@ -22,9 +22,9 @@ The `add` action
 
 When the `add` action is used, diffmask uses the Portage API to find
 masked packages matching the passed atoms. If a particular matching
-package is masked using `package.mask` (and `package.mask` only), diffmask
-tries to match it with existing `package.mask` files and implicitly calls
-the `update` action.
+package is masked using `package.mask` (and `package.mask` only),
+diffmask tries to match it with existing `package.mask` entry and copies
+that entry into your `package.unmask` file.
 
 Thus, if you would like to try development snapshots of Opera, you'd
 call:

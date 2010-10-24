@@ -9,7 +9,7 @@ MY_PV='0.3.1'
 import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
-from portage.dep import Atom
+from portage.dep import Atom, match_from_list
 from portage.exception import InvalidAtom
 
 def toString(obj):
@@ -51,8 +51,23 @@ class MaskFile(DiffmaskList):
 				def toString(self):
 					return self.atom
 
+				def __contains__(self, cpv):
+					if not isinstance(self.atom, Atom):
+						return False
+					else:
+						return match_from_list(self.atom, [cpv])
+
 			def __eq__(self, other):
 				return (self.comment == other.comment and DiffmaskList.__eq__(self, other))
+
+			def __contains__(self, cpv):
+				if isinstance(cpv, self.MaskAtom):
+					return DiffmaskList.__contains__(self, cpv)
+
+				for atom in self:
+					if cpv in atom:
+						return True
+				return False
 
 			def toString(self):
 				l = [DiffmaskList.toString(self)]
@@ -308,8 +323,9 @@ def vimdiff(vimdiffcmd, unmaskpath, dbapi):
 
 def add(pkgs, unmaskpath, dbapi):
 	""" Unmask specified packages. """
+	mask = MaskFile(MaskMerge(dbapi))
 	unmask = UnmaskFile(unmaskpath)
-	nonerepo = unmask[None]
+	modified = False
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-all', pkg)
@@ -336,18 +352,43 @@ def add(pkgs, unmaskpath, dbapi):
 				if not mr[0].startswith('#'):
 					raise AssertionError("portage.getmaskingreason() didn't return a comment")
 
-				print('Trying to unmask %s.' % bm)
-				# getmaskingreason() can sometime provide a broken comment
-				# so let's hope it or =pkg match will occur
-				mr.extend(['=%s\n' % bm, '\n'])
-				nonerepo.append(mr)
+				def repo_iter(f):
+					for r in mask:
+						for b in r:
+							yield (r, b)
+
+				match = None
+				for r, b in repo_iter(mask):
+					if bm in b:
+						match = (r, b)
+						# getmaskingreason() can sometime provide a broken comment,
+						# so don't require a match (but prefer one)
+						if b.comment == mr:
+							break
+
+				if match:
+					(r, b) = match
+					print('Unmasking %s.' % bm)
+
+					try:
+						ur = unmask[r.name]
+					except KeyError:
+						ur = unmask.MaskRepo(r.name)
+						unmask.append(ur)
+
+					ur.append(b)
+					modified = True
+				else:
+					print('Unable to find a matching mask for %s.' % bm)
+
 				break
 
 			matches.remove(bm)
 		else:
 			print("No '%s' suitable for unmasking found." % pkg)
-
-	update(unmaskpath, dbapi, unmask)
+	
+	if modified:
+		unmask.write()
 
 def main(argv):
 	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
