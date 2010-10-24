@@ -129,7 +129,7 @@ class UnmaskFile(MaskFile):
 			data = []
 		MaskFile.__init__(self, data)
 
-class UnmaskFileClean:
+class UnmaskFileClean(MaskFile):
 	class UnmaskRepoClean(MaskFile.MaskRepo):
 		def __init__(self, maskr, unmaskr, noner):
 			""" Try to match blocks in unmaskr (unmask entries associated with repo)
@@ -170,20 +170,15 @@ class UnmaskFileClean:
 				elif self.find(cb) is None: # avoid duplicates
 					self.append(cb)
 
-	def toString(self):
-		return ''.join([x.toString() for x in self.repos])
-
 	def __init__(self, mask, unmask):
 		""" Update and cleanup 'unmask' file to match 'mask' file. """
-		self.repos = []
+		DiffmaskList.__init__(self)
 
 		# find the repo containing unmatched entries
 		# (in fact it should be always the first one but better safe than sorry)
-		for r in unmask:
-			if r.name is None:
-				nonerepo = r
-				break
-		else:
+		try:
+			nonerepo = unmask[None]
+		except KeyError:
 			nonerepo = None
 
 		for mr in mask:
@@ -195,7 +190,7 @@ class UnmaskFileClean:
 
 				outr = self.UnmaskRepoClean(mr, r, nonerepo)
 				if len(outr):
-					self.repos.append(outr)
+					self.append(outr)
 
 		# repos which are only in unmask file are dropped implicitly
 
