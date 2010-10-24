@@ -286,12 +286,18 @@ def add(pkgs, unmaskpath, dbapi):
 			print('No packages match %s.' % pkg)
 			return
 
+		skipping = False
 		while len(matches) > 0:
 			bm = portage.best(matches)
 			ms = portage.getmaskingstatus(bm)
 
-			if not ms:
-				print('%s is visible, skipping.' % bm)
+			if skipping:
+				if ms:
+					print("(if you'd like to unmask the older version,\n pass <=%s instead)" % bm)
+					break
+			elif not ms:
+				print('%s is visible, skipping the atom.' % bm)
+				skipping = True
 			elif ms != ['package.mask']:
 				print('%s is masked by: %s; skipping.' % (bm, ', '.join(ms)))
 			else:
@@ -308,7 +314,7 @@ def add(pkgs, unmaskpath, dbapi):
 
 			matches.remove(bm)
 		else:
-			print('No packages matching %s and being only package.mask-masked were found.' % pkg)
+			print("No '%s' suitable for unmasking found." % pkg)
 
 	update(unmaskpath, dbapi, unmask)
 
