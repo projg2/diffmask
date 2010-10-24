@@ -51,8 +51,10 @@ class MaskFile(DiffmaskList):
 					else:
 						self.append(l)
 
-		def AppendBlock(self, data):
-			self.append(self.MaskBlock(data))
+		def append(self, data):
+			if not isinstance(data, self.MaskBlock):
+				data = self.MaskBlock(data)
+			DiffmaskList.append(self, data)
 
 		def toString(self):
 			out = []
@@ -82,7 +84,7 @@ class MaskFile(DiffmaskList):
 				newrepo = (l.startswith('## *') and l.endswith('*\n')) # repo name
 
 				if gotatoms or newrepo:
-					repo.AppendBlock(buf)
+					repo.append(buf)
 					buf = []
 					gotatoms = False
 				if newrepo:
@@ -94,7 +96,7 @@ class MaskFile(DiffmaskList):
 			buf.append(l)
 
 		if ''.join(buf).strip() != '':
-			repo.AppendBlock(buf)
+			repo.append(buf)
 
 		# cleanup leading/trailing whitespace (one belonging to repo header)
 		for r in self:
@@ -309,7 +311,7 @@ def add(pkgs, unmaskpath, dbapi):
 				# getmaskingreason() can sometime provide a broken comment
 				# so let's hope it or =pkg match will occur
 				mr.extend(['=%s\n' % bm, '\n'])
-				nonerepo.AppendBlock(mr)
+				nonerepo.append(mr)
 				break
 
 			matches.remove(bm)
