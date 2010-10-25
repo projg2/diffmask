@@ -315,26 +315,30 @@ class MaskMerge(DiffmaskList):
 		self.portdb = dbapi
 		self.ProcessAll()
 
-def update(unmask, dbapi):
+def update(unmask, mask, dbapi):
 	""" Update unmasks according to current package.mask file and remove old ones. """
-	mask = MaskFile(MaskMerge(dbapi))
+	if mask is None:
+		mask = MaskFile(MaskMerge(dbapi))
+	elif isinstance(mask, MaskMerge):
+		mask = MaskFile(mask)
 	if not isinstance(unmask, UnmaskFile):
 		unmask = UnmaskFile(unmask)
 
-	return UnmaskFileClean(mask, unmask)
+	return (UnmaskFileClean(mask, unmask), mask)
 
-def vimdiff(vimdiffcmd, unmaskpath, dbapi):
+def vimdiff(vimdiffcmd, unmaskpath, m, dbapi):
 	""" vimdiff merged package.mask with package.unmask. """
 	if isinstance(unmaskpath, UnmaskFile):
 		unmaskpath = unmaskpath.write()
+	if m is None:
+		m = MaskMerge(dbapi)
 
-	m = MaskMerge(dbapi)
 	t = tempfile.NamedTemporaryFile()
 	t.write(m.toString().encode('utf8'))
 	t.flush()
 
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
-	return unmaskpath
+	return (unmaskpath, m)
 
 def find_cpv_match(mask, cpv, comment = None, dbapi = None):
 	""" Try to get first good match for cpv and the comment in the mask
@@ -363,9 +367,12 @@ def find_cpv_match(mask, cpv, comment = None, dbapi = None):
 
 	return match
 
-def add(pkgs, unmask, dbapi):
+def add(pkgs, unmask, mask, dbapi):
 	""" Unmask specified packages. """
-	mask = MaskFile(MaskMerge(dbapi))
+	if mask is None:
+		mask = MaskFile(MaskMerge(dbapi))
+	elif isinstance(mask, MaskMerge):
+		mask = MaskFile(mask)
 	if not isinstance(unmask, UnmaskFile):
 		unmask = UnmaskFile(unmask)
 
@@ -414,9 +421,9 @@ def add(pkgs, unmask, dbapi):
 		else:
 			print("No '%s' suitable for unmasking found." % pkg)
 
-	return unmask
+	return (unmask, mask)
 
-def delete(pkgs, unmask, dbapi):
+def delete(pkgs, unmask, mask, dbapi):
 	""" Delete unmask entries for specified packages. """
 	if not isinstance(unmask, UnmaskFile):
 		unmask = UnmaskFile(unmask)
@@ -448,7 +455,7 @@ def delete(pkgs, unmask, dbapi):
 		else:
 			print("No '%s' suitable for un-unmasking found." % pkg)
 
-	return unmask
+	return (unmask, mask)
 
 def main(argv):
 	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
@@ -495,15 +502,16 @@ def main(argv):
 
 	portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
 	unmask = opts.unmask
+	mask = None
 
 	if 'add' in opts.mode:
-		unmask = add(args, unmask, dbapi = portdb)
+		(unmask, mask) = add(args, unmask, mask, dbapi = portdb)
 	elif 'delete' in opts.mode:
-		unmask = delete(args, unmask, dbapi = portdb)
+		(unmask, mask) = delete(args, unmask, mask, dbapi = portdb)
 	if 'update' in opts.mode:
-		unmask = update(unmask, dbapi = portdb)
+		(unmask, mask) = update(unmask, mask, dbapi = portdb)
 	if 'vimdiff' in opts.mode:
-		unmask = vimdiff(opts.vimdiff, unmask, dbapi = portdb)
+		(unmask, mask) = vimdiff(opts.vimdiff, unmask, mask, dbapi = portdb)
 
 	if isinstance(unmask, UnmaskFile):
 		unmask.write()
