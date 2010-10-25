@@ -494,7 +494,8 @@ def main(argv):
 		parser.error('--and and --delete actions require at least a single package')
 		return 2
 
-	portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
+	trees = portage.create_trees()
+	portdb = trees[portage.settings['ROOT']]['porttree'].dbapi
 	unmask = opts.unmask
 	mask = None
 
