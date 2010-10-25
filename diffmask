@@ -230,12 +230,12 @@ class UnmaskFileClean(UnmaskFile):
 								break
 
 			# sort & uniq, now we have to get exact matches
-			for b in tblocks:
-				cb = maskr.find(b)
-				if cb is None:
-					raise AssertionError('Match failed in sorting loop')
-				elif self.find(cb) is None: # avoid duplicates
+			for cb in maskr:
+				if cb in tblocks:
 					self.append(cb)
+					tblocks.remove(cb)
+			if tblocks:
+				raise AssertionError('At least a single match failed in the sorting loop')
 
 	def __init__(self, mask, unmask):
 		""" Update and cleanup 'unmask' file to match 'mask' file. """
