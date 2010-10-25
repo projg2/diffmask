@@ -208,10 +208,8 @@ class UnmaskFileClean(UnmaskFile):
 			inblocks = []
 			tblocks = []
 
-			if unmaskr is not None:
-				inblocks.extend(unmaskr)
-			if noner is not None:
-				inblocks.extend(noner)
+			inblocks.extend(unmaskr)
+			inblocks.extend(noner)
 
 			for b in inblocks:
 				# first try to get exact match
@@ -249,14 +247,14 @@ class UnmaskFileClean(UnmaskFile):
 		try:
 			nonerepo = unmask[None]
 		except KeyError:
-			nonerepo = None
+			nonerepo = []
 
 		for mr in mask:
 			if mr.name is not None:
 				try:
 					r = unmask[mr.name]
 				except KeyError: # repo only in mask file
-					r = None
+					r = []
 
 				outr = self.UnmaskRepoClean(mr, r, nonerepo)
 				if len(outr):
