@@ -205,13 +205,9 @@ class UnmaskFileClean(UnmaskFile):
 				and noner (unassociated unmask entries) to those in maskr (mask entries
 				associated with repo). Create blocklist containing matched entries. """
 			MaskFile.MaskRepo.__init__(self, maskr.name)
-			inblocks = []
 			tblocks = []
 
-			inblocks.extend(unmaskr)
-			inblocks.extend(noner)
-
-			for b in inblocks:
+			for b in unmaskr + noner:
 				# first try to get exact match
 				cb = maskr.find(b)
 				if cb is not None:
