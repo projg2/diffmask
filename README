@@ -7,6 +7,7 @@ Use
 diffmask should be called with one of the following actions:
 
 * `-a` or `--add` to unmask one or more packages passed as arguments,
+* `-d` or `--delete` to delete an unmask from `package.unmask` file,
 * `-u` or `--update` to try to sync unmasks with `package.mask` files,
 * `-v` or `--vimdiff` in order to vimdiff a merged `package.mask` file
 	with the `package.unmask` file.
@@ -36,6 +37,18 @@ using `package.mask` and because of missing keywords, you need to add it
 to your `package.keywords` first, e.g. using:
 
 	flagedit foo -- '**'
+
+
+The `delete` action
+-------------------
+
+The `delete` action is simply a reverse of `add`. It takes any amount
+of package atoms, matches them against visible packages in portdb
+and tries to find a matching mask entry in `package.unmask`.
+
+If you'd like to remove the entry you've added before, you can type:
+
+	diffmask -d opera
 
 
 The `update` action
