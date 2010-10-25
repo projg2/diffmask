@@ -173,15 +173,30 @@ class UnmaskFile(MaskFile):
 		if path is None:
 			path = self.path
 
+		c = self.toString()
+
+		try:
+			origf = codecs.open(path, 'r', 'utf8')
+		except (OSError, IOError):
+			pass
+		else:
+			if origf.read().strip() == c.strip():
+				origf.close()
+				print('The unmask file is up-to-date.')
+				return path
+			else:
+				origf.close()
+
 		newfn = portage.util.new_protect_filename(path)
 		# Always try hard to get a diff.
 		if newfn == path:
 			open(newfn, 'w').close()
 			newfn = portage.util.new_protect_filename(path)
 		newf = codecs.open(newfn, 'w', 'utf8')
-		newf.write(self.toString())
+		newf.write(c)
 
 		print('New package.unmask saved as %s.\nPlease run dispatch-conf or etc-update to merge it.' % newfn)
+		return newfn
 
 class UnmaskFileClean(UnmaskFile):
 	class UnmaskRepoClean(MaskFile.MaskRepo):
@@ -300,26 +315,26 @@ class MaskMerge(DiffmaskList):
 		self.portdb = dbapi
 		self.ProcessAll()
 
-def update(unmaskpath, dbapi, unmask = None):
+def update(unmask, dbapi):
 	""" Update unmasks according to current package.mask file and remove old ones. """
 	mask = MaskFile(MaskMerge(dbapi))
-	if unmask is None:
-		unmask = UnmaskFile(unmaskpath)
+	if not isinstance(unmask, UnmaskFile):
+		unmask = UnmaskFile(unmask)
 
-	cmp = UnmaskFileClean(mask, unmask)
-
-	if cmp.toString().strip() == unmask.toString().strip():
-		print('The unmask file is up-to-date.')
-	else:
-		cmp.write()
+	return UnmaskFileClean(mask, unmask)
 
 def vimdiff(vimdiffcmd, unmaskpath, dbapi):
 	""" vimdiff merged package.mask with package.unmask. """
+	if isinstance(unmaskpath, UnmaskFile):
+		unmaskpath = unmaskpath.write()
+
 	m = MaskMerge(dbapi)
 	t = tempfile.NamedTemporaryFile()
 	t.write(m.toString().encode('utf8'))
 	t.flush()
+
 	os.system('%s "%s" "%s"' % (vimdiffcmd, t.name, unmaskpath))
+	return unmaskpath
 
 def find_cpv_match(mask, cpv, comment = None, dbapi = None):
 	""" Try to get first good match for cpv and the comment in the mask
@@ -348,11 +363,11 @@ def find_cpv_match(mask, cpv, comment = None, dbapi = None):
 
 	return match
 
-def add(pkgs, unmaskpath, dbapi):
+def add(pkgs, unmask, dbapi):
 	""" Unmask specified packages. """
 	mask = MaskFile(MaskMerge(dbapi))
-	unmask = UnmaskFile(unmaskpath)
-	modified = False
+	if not isinstance(unmask, UnmaskFile):
+		unmask = UnmaskFile(unmask)
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-all', pkg)
@@ -393,20 +408,18 @@ def add(pkgs, unmaskpath, dbapi):
 						unmask.append(ur)
 
 					ur.append(b)
-					modified = True
 				break
 
 			matches.remove(bm)
 		else:
 			print("No '%s' suitable for unmasking found." % pkg)
 
-	if modified:
-		unmask.write()
+	return unmask
 
-def delete(pkgs, unmaskpath, dbapi):
+def delete(pkgs, unmask, dbapi):
 	""" Delete unmask entries for specified packages. """
-	unmask = UnmaskFile(unmaskpath)
-	modified = False
+	if not isinstance(unmask, UnmaskFile):
+		unmask = UnmaskFile(unmask)
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-visible', pkg)
@@ -429,16 +442,13 @@ def delete(pkgs, unmaskpath, dbapi):
 				# Feel free to remove an empty repository.
 				if not r:
 					unmask.remove(r)
-
-				modified = True
 				break
 
 			matches.remove(bm)
 		else:
 			print("No '%s' suitable for un-unmasking found." % pkg)
 
-	if modified:
-		unmask.write()
+	return unmask
 
 def main(argv):
 	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
@@ -484,14 +494,19 @@ def main(argv):
 		return 2
 
 	portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
+	unmask = opts.unmask
+
 	if 'add' in opts.mode:
-		add(args, opts.unmask, dbapi = portdb)
+		unmask = add(args, unmask, dbapi = portdb)
 	elif 'delete' in opts.mode:
-		delete(args, opts.unmask, dbapi = portdb)
+		unmask = delete(args, unmask, dbapi = portdb)
 	if 'update' in opts.mode:
-		update(opts.unmask, dbapi = portdb)
+		unmask = update(unmask, dbapi = portdb)
 	if 'vimdiff' in opts.mode:
-		vimdiff(opts.vimdiff, opts.unmask, dbapi = portdb)
+		unmask = vimdiff(opts.vimdiff, unmask, dbapi = portdb)
+
+	if isinstance(unmask, UnmaskFile):
+		unmask.write()
 
 	return 0
 
