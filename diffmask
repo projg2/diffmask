@@ -445,19 +445,19 @@ def main(argv):
 			'etc', 'portage', 'package.unmask')
 	if os.path.isdir(defpunmask):
 		defpunmask = os.path.join(defpunmask, 'diffmask')
-	parser = optparse.OptionParser(version=MY_PV, usage='%prog <action> [options]')
+	parser = optparse.OptionParser(version=MY_PV, usage='%prog <actions> [options] [packages]')
 	parser.add_option('-U', '--unmask-file', action='store',
 			dest='unmask', default=defpunmask,
 			help='package.unmask file location')
 
 	gr = optparse.OptionGroup(parser, 'Actions')
-	gr.add_option('-a', '--add', action='store_const',
+	gr.add_option('-a', '--add', action='append_const',
 			dest='mode', const='add', help=add.__doc__.strip())
-	gr.add_option('-d', '--delete', action='store_const',
+	gr.add_option('-d', '--delete', action='append_const',
 			dest='mode', const='delete', help=delete.__doc__.strip())
-	gr.add_option('-u', '--update', action='store_const',
+	gr.add_option('-u', '--update', action='append_const',
 			dest='mode', const='update', help=update.__doc__.strip())
-	gr.add_option('-v', '--vimdiff', action='store_const',
+	gr.add_option('-v', '--vimdiff', action='append_const',
 			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
 	parser.add_option_group(gr)
 
@@ -468,28 +468,30 @@ def main(argv):
 
 	(opts, args) = parser.parse_args(args=argv[1:])
 
-	if opts.mode is None:
+	if not opts.mode:
 		if os.path.basename(argv[0]).startswith('vimdiff'):
-			opts.mode = 'vimdiff'
+			opts.mode = ('vimdiff')
 		else:
 			parser.print_help()
 			return 2
 
+	opts.mode = frozenset(opts.mode)
+	if 'add' in opts.mode and 'delete' in opts.mode:
+		parser.error('--add and --delete arguments are exclusive.')
+		return 2
+	if not args and ('add' in opts.mode or 'delete' in opts.mode):
+		parser.error('--and and --delete actions require at least a single package')
+		return 2
+
 	portdb = portage.db[portage.settings['ROOT']]['porttree'].dbapi
-	if opts.mode == 'vimdiff':
-		vimdiff(opts.vimdiff, opts.unmask, dbapi = portdb)
-	elif opts.mode == 'update':
-		update(opts.unmask, dbapi = portdb)
-	elif opts.mode == 'add':
-		if len(args) == 0:
-			print('--add requires at least a single package name.')
-			return 2
+	if 'add' in opts.mode:
 		add(args, opts.unmask, dbapi = portdb)
-	elif opts.mode == 'delete':
-		if len(args) == 0:
-			print('--delete requires at least a single package name.')
-			return 2
+	elif 'delete' in opts.mode:
 		delete(args, opts.unmask, dbapi = portdb)
+	if 'update' in opts.mode:
+		update(opts.unmask, dbapi = portdb)
+	if 'vimdiff' in opts.mode:
+		vimdiff(opts.vimdiff, opts.unmask, dbapi = portdb)
 
 	return 0
 
