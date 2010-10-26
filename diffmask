@@ -85,14 +85,14 @@ class MaskFile(DiffmaskList):
 				self.after = []
 
 				for l in data:
-					if len(self) == 0:
-						if len(self.comment) == 0 and l.strip() == '':
+					if not self:
+						if not self.comment and not l.strip():
 							self.before.append(l)
-						elif l.startswith('#') or l.strip() == '':
+						elif l.startswith('#') or not l.strip():
 							self.comment.append(l)
 						else:
 							self.append(l)
-					elif l.startswith('#') or l.strip() == '':
+					elif l.startswith('#') or not l.strip():
 						self.after.append(l)
 					else:
 						self.append(l)
@@ -140,11 +140,11 @@ class MaskFile(DiffmaskList):
 					repo = self.MaskRepo(l[4:-2])
 					self.append(repo)
 					continue
-			elif ''.join(l).strip() != '':
+			elif ''.join(l).strip():
 				gotatoms = True
 			buf.append(l)
 
-		if ''.join(buf).strip() != '':
+		if ''.join(buf).strip():
 			repo.append(buf)
 
 		# cleanup leading/trailing whitespace (one belonging to repo header)
@@ -253,7 +253,7 @@ class UnmaskFileClean(UnmaskFile):
 					r = []
 
 				outr = self.UnmaskRepoClean(mr, r, nonerepo)
-				if len(outr):
+				if outr:
 					self.append(outr)
 
 		# repos which are only in unmask file are dropped implicitly
@@ -271,7 +271,7 @@ class MaskMerge(DiffmaskList):
 				if gotwhite:
 					ccb = i
 					gotwhite = False
-			elif mf[i].strip() == '':
+			elif not mf[i].strip():
 				gotwhite = True
 			else: # package atom
 				if ccb is not None:
@@ -372,7 +372,7 @@ def add(pkgs, unmask, mask, dbapi):
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-all', pkg)
-		if len(matches) == 0:
+		if not matches:
 			print('No packages match %s.' % pkg)
 			return
 
@@ -424,7 +424,7 @@ def delete(pkgs, unmask, mask, dbapi):
 
 	for pkg in pkgs:
 		matches = dbapi.xmatch('match-visible', pkg)
-		if len(matches) == 0:
+		if not matches:
 			print('No packages match %s.' % pkg)
 			return
 
