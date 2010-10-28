@@ -25,7 +25,7 @@ class MaskMerge(DiffmaskList):
 					del mf[:ccb]
 				break
 
-		self.extend(['\n', '## *%s*\n' % header, '\n'])
+		self.extend(['## *%s*\n' % header])
 		self.extend(mf)
 
 	def ProcessRepos(self):

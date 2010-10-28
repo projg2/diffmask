@@ -89,7 +89,7 @@ class MaskFile(DiffmaskList):
 		def toString(self):
 			out = []
 			if self.name:
-				out.append('\n## *%s*\n\n' % self.name)
+				out.append('## *%s*\n' % self.name)
 			out.extend([x.toString() for x in self])
 			return ''.join(out)
 
@@ -144,16 +144,3 @@ class MaskFile(DiffmaskList):
 			repo = self.MaskRepo(reponame)
 			repo.extend(entries)
 			self.append(repo)
-
-		# cleanup leading/trailing whitespace (one belonging to repo header)
-		for r in self:
-			try:
-				if r[0].before[0] == '\n':
-					del r[0].before[0]
-			except IndexError:
-				pass
-			try:
-				if r[-1].after[-1] == '\n':
-					del r[-1].after[-1]
-			except IndexError:
-				pass
