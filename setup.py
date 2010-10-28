@@ -7,13 +7,21 @@ from distutils.core import setup
 
 import os.path, sys
 
+sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), 'lib'))
+try:
+	from diffmask import PV
+except ImportError:
+	PV = 'unknown'
+
 setup(
 		name = 'diffmask',
-		version = '0.3.2',
+		version = PV,
 		author = 'Michał Górny',
 		author_email = 'mgorny@gentoo.org',
 		url = 'http://github.com/mgorny/diffmask',
 
+		package_dir = {'': 'lib'},
+		packages = ['diffmask'],
 		scripts = ['diffmask'],
 
 		classifiers = [

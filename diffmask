@@ -3,14 +3,17 @@
 # Create merged 'package.mask' file and maintain 'package.unmask' using it
 # (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
 
-MY_PN='diffmask'
-MY_PV='0.3.2'
-
 import codecs, optparse, os, os.path, sys, tempfile
 import portage
 
 from portage.dep import Atom, match_from_list
 from portage.exception import InvalidAtom
+
+try:
+	from diffmask import PV as MY_PV
+except ImportError:
+	sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), 'lib'))
+	from diffmask import PV as MY_PV
 
 def toString(obj):
 	if hasattr(obj, 'toString'):
