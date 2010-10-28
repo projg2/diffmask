@@ -3,7 +3,6 @@
 # (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
 
 import codecs, os.path
-import portage
 from diffmask.util import DiffmaskList
 
 class MaskMerge(DiffmaskList):
@@ -40,7 +39,7 @@ class MaskMerge(DiffmaskList):
 				self.ProcessMaskFile(maskf, o)
 
 	def ProcessProfiles(self):
-		for p in portage.settings.profiles:
+		for p in self.portdb.settings.profiles:
 			try:
 				maskf = codecs.open(os.path.join(p, 'package.mask'), 'r', 'utf8')
 			except IOError:
