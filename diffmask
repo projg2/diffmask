@@ -6,6 +6,10 @@
 import optparse, os, os.path, sys, tempfile
 import portage
 
+from portage.package.ebuild.getmaskingstatus import getmaskingstatus
+from portage.package.ebuild.getmaskingreason import getmaskingreason
+from portage.versions import best
+
 try:
 	from diffmask import PV as MY_PV
 except ImportError:
@@ -86,8 +90,8 @@ def add(pkgs, unmask, mask, dbapi):
 
 		skipping = False
 		while len(matches) > 0:
-			bm = portage.best(matches)
-			ms = portage.getmaskingstatus(bm)
+			bm = best(matches)
+			ms = getmaskingstatus(bm)
 
 			if skipping:
 				if ms:
@@ -99,9 +103,9 @@ def add(pkgs, unmask, mask, dbapi):
 			elif ms != ['package.mask']:
 				print('%s is masked by: %s; skipping.' % (bm, ', '.join(ms)))
 			else:
-				mr = portage.getmaskingreason(bm).splitlines(True)
+				mr = getmaskingreason(bm).splitlines(True)
 				if not mr[0].startswith('#'):
-					raise AssertionError("portage.getmaskingreason() didn't return a comment")
+					raise AssertionError("getmaskingreason() didn't return a comment")
 
 				try:
 					(r, b) = find_cpv_match(mask, bm, mr, dbapi)
@@ -138,7 +142,7 @@ def delete(pkgs, unmask, mask, dbapi):
 
 		skipping = False
 		while len(matches) > 0:
-			bm = portage.best(matches)
+			bm = best(matches)
 
 			try:
 				(r, b) = find_cpv_match(unmask, bm, dbapi = dbapi)
