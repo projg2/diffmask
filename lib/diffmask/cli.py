@@ -81,7 +81,7 @@ def add(pkgs, unmask, mask, dbapi):
 		matches = dbapi.xmatch('match-all', pkg)
 		if not matches:
 			print('No packages match %s.' % pkg)
-			return
+			continue
 
 		skipping = False
 		while len(matches) > 0:
@@ -133,7 +133,7 @@ def delete(pkgs, unmask, mask, dbapi):
 		matches = dbapi.xmatch('match-visible', pkg)
 		if not matches:
 			print('No packages match %s.' % pkg)
-			return
+			continue
 
 		while len(matches) > 0:
 			bm = best(matches)
