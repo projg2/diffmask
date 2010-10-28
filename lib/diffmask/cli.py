@@ -135,7 +135,6 @@ def delete(pkgs, unmask, mask, dbapi):
 			print('No packages match %s.' % pkg)
 			return
 
-		skipping = False
 		while len(matches) > 0:
 			bm = best(matches)
 
