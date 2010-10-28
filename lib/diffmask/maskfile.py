@@ -17,7 +17,10 @@ class MaskFile(DiffmaskList):
 				def __init__(self, s):
 					# XXX: Read and pass the EAPI
 					try:
-						self.atom = Atom(s, allow_wildcard = True)
+						try:
+							self.atom = Atom(s, allow_wildcard = True)
+						except TypeError: # portage-2.1.8 compat
+							self.atom = Atom(s)
 					except InvalidAtom:
 						self.atom = s
 					else:
