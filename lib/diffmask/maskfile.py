@@ -133,7 +133,8 @@ class MaskFile(DiffmaskList):
 				newmask = ('<' in l and '>' in l) # a mask header
 
 				if gotatoms or newrepo:
-					tmprepo.append(buf)
+					if gotatoms:
+						tmprepo.append(buf)
 					pbuf = buf
 					buf = []
 					gotatoms = False
