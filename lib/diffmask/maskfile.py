@@ -77,6 +77,10 @@ class MaskFile(DiffmaskList):
 					else:
 						self.append(l)
 
+				# We require each entry to end with a blank line
+				if not self.after or not self.after[-1].endswith('\n'):
+					self.after.append('\n')
+
 		def append(self, data):
 			if not isinstance(data, self.MaskBlock):
 				data = self.MaskBlock(data)
