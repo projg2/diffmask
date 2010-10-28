@@ -4,8 +4,8 @@
 # (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
 
 import optparse, os, os.path, sys, tempfile
-import portage
 
+from portage import create_trees
 from portage.package.ebuild.getmaskingstatus import getmaskingstatus
 from portage.package.ebuild.getmaskingreason import getmaskingreason
 from portage.versions import best
@@ -164,7 +164,12 @@ def delete(pkgs, unmask, mask, dbapi):
 	return (unmask, mask)
 
 def main(argv):
-	defpunmask = os.path.join(portage.settings['PORTAGE_CONFIGROOT'],
+	trees = create_trees(
+			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
+			target_root = os.environ.get('ROOT'))
+	porttree = trees[max(trees)]['porttree']
+
+	defpunmask = os.path.join(porttree.settings['PORTAGE_CONFIGROOT'],
 			'etc', 'portage', 'package.unmask')
 	if os.path.isdir(defpunmask):
 		defpunmask = os.path.join(defpunmask, 'diffmask')
@@ -206,8 +211,7 @@ def main(argv):
 		parser.error('--and and --delete actions require at least a single package')
 		return 2
 
-	trees = portage.create_trees()
-	portdb = trees[portage.settings['ROOT']]['porttree'].dbapi
+	portdb = porttree.dbapi
 	unmask = opts.unmask
 	mask = None
 
