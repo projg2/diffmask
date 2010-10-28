@@ -6,6 +6,7 @@
 import optparse, os, os.path, sys, tempfile
 
 from portage import create_trees
+from portage.const import USER_CONFIG_PATH
 from portage.package.ebuild.getmaskingstatus import getmaskingstatus
 from portage.package.ebuild.getmaskingreason import getmaskingreason
 from portage.versions import best
@@ -170,7 +171,7 @@ def main(argv):
 	porttree = trees[max(trees)]['porttree']
 
 	defpunmask = os.path.join(porttree.settings['PORTAGE_CONFIGROOT'],
-			'etc', 'portage', 'package.unmask')
+			USER_CONFIG_PATH, 'package.unmask')
 	if os.path.isdir(defpunmask):
 		defpunmask = os.path.join(defpunmask, 'diffmask')
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <actions> [options] [packages]')
