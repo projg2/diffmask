@@ -3,11 +3,12 @@
 # Create merged 'package.mask' file and maintain 'package.unmask' using it
 # (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
 
-import os.path, sys
+import sys
 
 try:
 	from diffmask.cli import main
 except ImportError:
+	import os.path
 	sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
 	# Ensure a clean reload from the new location.
 	if 'diffmask' in sys.modules:
