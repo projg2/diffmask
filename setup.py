@@ -7,7 +7,7 @@ from distutils.core import setup
 
 import os.path, sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), 'lib'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
 try:
 	from diffmask import PV
 except ImportError:
