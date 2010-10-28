@@ -165,19 +165,9 @@ def delete(pkgs, unmask, mask, dbapi):
 	return (unmask, mask)
 
 def main(argv):
-	trees = create_trees(
-			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
-			target_root = os.environ.get('ROOT'))
-	porttree = trees[max(trees)]['porttree']
-
-	defpunmask = os.path.join(porttree.settings['PORTAGE_CONFIGROOT'],
-			USER_CONFIG_PATH, 'package.unmask')
-	if os.path.isdir(defpunmask):
-		defpunmask = os.path.join(defpunmask, 'diffmask')
 	parser = optparse.OptionParser(version=MY_PV, usage='%prog <actions> [options] [packages]')
 	parser.add_option('-U', '--unmask-file', action='store',
-			dest='unmask', default=defpunmask,
-			help='package.unmask file location')
+			dest='unmask', help='package.unmask file location')
 
 	gr = optparse.OptionGroup(parser, 'Actions')
 	gr.add_option('-a', '--add', action='append_const',
@@ -212,8 +202,18 @@ def main(argv):
 		parser.error('--and and --delete actions require at least a single package')
 		return 2
 
+	trees = create_trees(
+			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
+			target_root = os.environ.get('ROOT'))
+	porttree = trees[max(trees)]['porttree']
 	portdb = porttree.dbapi
+
 	unmask = opts.unmask
+	if not unmask:
+		unmask = os.path.join(porttree.settings['PORTAGE_CONFIGROOT'],
+			USER_CONFIG_PATH, 'package.unmask')
+		if os.path.isdir(unmask):
+			unmask = os.path.join(unmask, 'diffmask')
 	mask = None
 
 	if 'add' in opts.mode:
