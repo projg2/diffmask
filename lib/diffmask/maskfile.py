@@ -101,6 +101,14 @@ class MaskFile(DiffmaskList):
 			DiffmaskList.__init__(self)
 			self.name = name
 
+	def toString(self):
+		out = DiffmaskList.toString(self)
+		# If the file ends with a blank line, drop it.
+		if out.endswith('\n\n'):
+			return out[:-1]
+		else:
+			return out
+
 	def __getitem__(self, name):
 		if isinstance(name, int):
 			return DiffmaskList.__getitem__(self, name)
