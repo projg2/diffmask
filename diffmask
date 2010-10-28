@@ -12,6 +12,11 @@ except ImportError:
 	sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
 	# Ensure a clean reload from the new location.
 	if 'diffmask' in sys.modules:
+		try: # py3 compat
+			from imp import reload
+		except ImportError:
+			pass
+
 		reload(sys.modules['diffmask'])
 		del sys.modules['diffmask']
 	from diffmask.cli import main
