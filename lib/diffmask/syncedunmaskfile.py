@@ -7,11 +7,20 @@ from diffmask.unmaskfile import UnmaskFile
 from diffmask.util import DiffmaskList
 
 class SyncedUnmaskFile(UnmaskFile):
+	""" A class representing the package.unmask file being up-to-date
+		with the package.mask files. In other words, all mask entries
+		in the SyncedUnmaskFile correspond to package.mask entries
+		and are ordered like them. """
 	class SyncedUnmaskRepo(MaskFile.MaskRepo):
+		""" A class representing a single repository in the
+			package.unmask file. """
 		def __init__(self, maskr, unmaskr, noner):
-			""" Try to match blocks in unmaskr (unmask entries associated with repo)
-				and noner (unassociated unmask entries) to those in maskr (mask entries
-				associated with repo). Create blocklist containing matched entries. """
+			""" Instantiate the new SyncedUnmaskRepo. Try to match
+				entries from the original package.unmask file (being
+				passed as `unmaskr' and `noner' for the entries
+				associated with the repo and those being unassociated
+				respectively) with the package.mask repository `maskr'.
+				"""
 			MaskFile.MaskRepo.__init__(self, maskr.name)
 			tblocks = []
 
@@ -42,7 +51,10 @@ class SyncedUnmaskFile(UnmaskFile):
 				raise AssertionError('At least a single match failed in the sorting loop')
 
 	def __init__(self, mask, unmask):
-		""" Update and cleanup 'unmask' file to match 'mask' file. """
+		""" Instantiate the new SyncedUnmaskFile. Try to match entries
+			from the original package.unmask file (being passed as
+			`unmask') and the package.mask files (being passed as
+			`mask'). Unmatched entries will be dropped. """
 		DiffmaskList.__init__(self)
 		self.path = unmask.path
 

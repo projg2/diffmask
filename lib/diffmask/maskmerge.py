@@ -6,7 +6,12 @@ import codecs, os.path
 from diffmask.util import DiffmaskList
 
 class MaskMerge(DiffmaskList):
+	""" A class representing the contents of a set of merged
+		package.mask files as a string list (with newlines preserved).
+		"""
 	def ProcessMaskFile(self, file, header):
+		""" Read a single package.mask file (being given as an open file
+			instance) and append it with the name `header'. """
 		mf = file.readlines()
 
 		# try to drop copyright, examples etc.
@@ -56,6 +61,8 @@ class MaskMerge(DiffmaskList):
 				self.ProcessMaskFile(maskf, profname)
 
 	def __init__(self, dbapi):
+		""" Instantiate the MaskMerge class. Grab the list of active
+			package.mask files from Portage and read them. """
 		self.portdb = dbapi
 		self.ProcessRepos()
 		self.ProcessProfiles()

@@ -8,13 +8,21 @@ from portage.exception import InvalidAtom
 from diffmask.util import DiffmaskList
 
 class MaskFile(DiffmaskList):
+	""" A package.mask format file. A list of repository blocks. """
 	class MaskRepo(DiffmaskList):
+		""" A single repository in MaskFile. A list of entries. """
 		class MaskBlock(DiffmaskList):
 			""" A single block of package.mask file. Basically a list of
-				atoms, keeping the comments as well. """
-
+				atoms, preserving the comments as well. """
 			class MaskAtom:
+				""" A single atom in the package.mask block. It can
+					either point to an Atom() instance or a string, if
+					the atom is incorrect. """
 				def __init__(self, s):
+					""" Try to parse the atom string s. If it's a
+						correct atom, an internal instance of Atom()
+						would be instantiated. Otherwise, the atom
+						string will be kept. """
 					# XXX: Read and pass the EAPI
 					try:
 						try:
@@ -32,15 +40,27 @@ class MaskFile(DiffmaskList):
 					return self.atom
 
 				def __contains__(self, cpv):
+					""" Check whether the atom matches the given cpv.
+						If it was incorrect, simply return False. """
 					if not isinstance(self.atom, Atom):
 						return False
 					else:
 						return match_from_list(self.atom, [cpv])
 
 			def __eq__(self, other):
+				""" Check whether two mask entries exactly match each
+					other. This implies checking both the comment block
+					and the complete atom list. Trailing whitespace is
+					not taken into account. """
 				return (self.comment == other.comment and DiffmaskList.__eq__(self, other))
 
 			def __contains__(self, cpv):
+				""" When passed a cpv, check whether at least one
+					of the atoms in the mask entry match the given cpv.
+					
+					When passed a MaskAtom instance, check whether
+					the particular Atom is contained within the entry.
+					"""
 				if isinstance(cpv, self.MaskAtom):
 					return DiffmaskList.__contains__(self, cpv)
 
@@ -54,11 +74,16 @@ class MaskFile(DiffmaskList):
 				return ''.join(self.comment + l + self.after)
 
 			def append(self, data):
+				""" Append the atom to the entry, taking care
+					of conversion into MaskAtom if necessary. """
 				if not isinstance(data, self.MaskAtom):
 					data = self.MaskAtom(data)
 				DiffmaskList.append(self, data)
 
 			def __init__(self, data):
+				""" Instantiate a new MaskBlock from string list.
+					The list is required to contain only the contents
+					of a single mask entry. """
 				DiffmaskList.__init__(self)
 				self.comment = []
 				self.after = []
@@ -81,6 +106,8 @@ class MaskFile(DiffmaskList):
 					self.after.append('\n')
 
 		def append(self, data):
+			""" Append the given block to the repository, taking care
+				of casting into MaskBlock if necessary. """
 			if not isinstance(data, self.MaskBlock):
 				data = self.MaskBlock(data)
 			DiffmaskList.append(self, data)
@@ -97,6 +124,8 @@ class MaskFile(DiffmaskList):
 			return ''.join(out)
 
 		def __init__(self, name):
+			""" Instiantate a new MaskRepo named 'name'. The repository
+				will be empty and needs to be fed manually. """
 			DiffmaskList.__init__(self)
 			self.name = name
 
@@ -109,6 +138,7 @@ class MaskFile(DiffmaskList):
 			return out
 
 	def __getitem__(self, name):
+		""" Get the repository by the numeric index or name. """
 		if isinstance(name, int):
 			return DiffmaskList.__getitem__(self, name)
 		else:
@@ -118,6 +148,8 @@ class MaskFile(DiffmaskList):
 			raise KeyError('No such repo')
 
 	def __init__(self, data):
+		""" Instiantate a new MaskFile. Parse the contents of string
+			list data, and feed the subclasses with it. """
 		repo = self.MaskRepo(None)
 		DiffmaskList.__init__(self, [repo])
 		buf = []

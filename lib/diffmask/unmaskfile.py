@@ -9,7 +9,10 @@ from portage.util import new_protect_filename
 from diffmask.maskfile import MaskFile
 
 class UnmaskFile(MaskFile):
+	""" A class representing the user's package.unmask file. """
 	def __init__(self, path):
+		""" Instantiate the UnmaskFile class associated with
+			the filename `path'. Read it if it does exist. """
 		if os.path.exists(path):
 			data = codecs.open(path, 'r', 'utf8').readlines()
 		else:
@@ -18,6 +21,9 @@ class UnmaskFile(MaskFile):
 		self.path = path
 
 	def write(self, path = None):
+		""" Check whether the package.unmask file has changed, and write
+			it if it did. Use the config-protect mechanism of Portage.
+			"""
 		if path is None:
 			path = self.path
 
