@@ -132,13 +132,14 @@ class MaskFile(DiffmaskList):
 				newrepo = (l.startswith('## *') and l.endswith('*\n')) # repo name
 				newmask = ('<' in l and '>' in l) # a mask header
 
-				if gotatoms or newrepo:
-					if gotatoms:
-						tmprepo.append(buf)
+				if gotatoms:
+					tmprepo.append(buf)
 					pbuf = buf
 					buf = []
 					gotatoms = False
 				if newrepo:
+					pbuf = None
+					buf = []
 					tmprepo = []
 					tmprepos.append((l[4:-2], tmprepo))
 					continue
