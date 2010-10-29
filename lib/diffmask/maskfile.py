@@ -65,12 +65,12 @@ class MaskFile(DiffmaskList):
 
 				for l in data:
 					if not self:
-						if not self.comment and not l.strip():
-							pass
-						elif l.startswith('#') or not l.strip():
+						if l.startswith('#'): # a comment
 							self.comment.append(l)
-						else:
+						elif l.strip(): # the first atom
 							self.append(l)
+						elif self.comment: # a non-leading whitespace
+							self.comment.append(l)
 					elif l.startswith('#') or not l.strip():
 						self.after.append(l)
 					else:
