@@ -92,7 +92,7 @@ class MaskFile(DiffmaskList):
 		def toString(self):
 			out = []
 			if self.name:
-				out.append('## *%s*\n' % self.name)
+				out.append('## *%s*\n\n' % self.name)
 			out.extend([x.toString() for x in self])
 			return ''.join(out)
 
