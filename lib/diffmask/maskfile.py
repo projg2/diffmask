@@ -51,7 +51,7 @@ class MaskFile(DiffmaskList):
 
 			def toString(self):
 				l = [DiffmaskList.toString(self)]
-				return ''.join(self.before + self.comment + l + self.after)
+				return ''.join(self.comment + l + self.after)
 
 			def append(self, data):
 				if not isinstance(data, self.MaskAtom):
@@ -60,14 +60,13 @@ class MaskFile(DiffmaskList):
 
 			def __init__(self, data):
 				DiffmaskList.__init__(self)
-				self.before = []
 				self.comment = []
 				self.after = []
 
 				for l in data:
 					if not self:
 						if not self.comment and not l.strip():
-							self.before.append(l)
+							pass
 						elif l.startswith('#') or not l.strip():
 							self.comment.append(l)
 						else:
