@@ -55,10 +55,7 @@ class MaskMerge(DiffmaskList):
 				profname = 'profile: %s' % os.path.relpath(p, os.path.join(self.portdb.porttree_root, 'profiles'))
 				self.ProcessMaskFile(maskf, profname)
 
-	def ProcessAll(self):
-		self.ProcessRepos()
-		self.ProcessProfiles()
-
 	def __init__(self, dbapi):
 		self.portdb = dbapi
-		self.ProcessAll()
+		self.ProcessRepos()
+		self.ProcessProfiles()
