@@ -2,7 +2,7 @@
 #	vim:fileencoding=utf-8
 # (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
 
-from portage.dep import Atom, match_from_list
+from portage.dep import Atom, match_from_list, match_to_list
 from portage.exception import InvalidAtom
 
 from diffmask.util import DiffmaskList
@@ -64,10 +64,8 @@ class MaskFile(DiffmaskList):
 				if isinstance(cpv, self.MaskAtom):
 					return DiffmaskList.__contains__(self, cpv)
 
-				for atom in self:
-					if cpv in atom:
-						return True
-				return False
+				atoms = [x.atom for x in self if isinstance(x.atom, Atom)]
+				return match_to_list(cpv, atoms)
 
 			def toString(self):
 				l = [DiffmaskList.toString(self)]
