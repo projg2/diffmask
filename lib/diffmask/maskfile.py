@@ -52,7 +52,7 @@ class MaskFile(DiffmaskList):
 					other. This implies checking both the comment block
 					and the complete atom list. Trailing whitespace is
 					not taken into account. """
-				return (self.comment == other.comment and DiffmaskList.__eq__(self, other))
+				return (self.toString().strip() == other.toString().strip())
 
 			def __contains__(self, cpv):
 				""" When passed a cpv, check whether at least one
