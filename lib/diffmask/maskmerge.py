@@ -25,6 +25,13 @@ class MaskMerge(DiffmaskList):
 					del mf[:ccb]
 				break
 
+		# Ensure the trailing newline.
+		try:
+			if mf[-1].strip():
+				mf.append('\n')
+		except IndexError: # An empty repo? Just omit it.
+			return
+
 		self.extend(['## *%s*\n' % header, '\n'])
 		self.extend(mf)
 
