@@ -147,7 +147,7 @@ class MaskFile(DiffmaskList):
 					pbuf.extend(buf)
 					pbuf = None
 					buf = []
-			elif ''.join(l).strip():
+			elif l.strip():
 				gotatoms = True
 			buf.append(l)
 
