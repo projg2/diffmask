@@ -145,6 +145,15 @@ class MaskFile(DiffmaskList):
 					return r
 			raise KeyError('No such repo')
 
+	def __contains__(self, repo):
+		if isinstance(repo, self.MaskRepo):
+			return DiffmaskList.__contains__(self, repo)
+		else:
+			for r in self:
+				if r.name == repo:
+					return True
+			return False
+
 	def __init__(self, data):
 		""" Instiantate a new MaskFile. Parse the contents of string
 			list data, and feed the subclasses with it. """
