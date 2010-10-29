@@ -59,3 +59,6 @@ class MaskMerge(DiffmaskList):
 		self.portdb = dbapi
 		self.ProcessRepos()
 		self.ProcessProfiles()
+		# Drop the trailing blank line.
+		if not self[-1].strip():
+			del self[-1]
