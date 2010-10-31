@@ -17,7 +17,6 @@ from diffmask.unmaskfile import UnmaskFile
 from diffmask.syncedunmaskfile import SyncedUnmaskFile
 
 def update(unmask, mask, dbapi):
-	""" Update unmasks according to current package.mask file and remove old ones. """
 	if mask is None:
 		mask = MaskFile(MaskMerge(dbapi))
 	elif isinstance(mask, MaskMerge):
@@ -28,7 +27,6 @@ def update(unmask, mask, dbapi):
 	return (SyncedUnmaskFile(mask, unmask), mask)
 
 def vimdiff(vimdiffcmd, unmaskpath, m, dbapi):
-	""" vimdiff merged package.mask with package.unmask. """
 	if isinstance(unmaskpath, UnmaskFile):
 		unmaskpath = unmaskpath.write()
 	if m is None:
@@ -69,7 +67,6 @@ def find_cpv_match(mask, cpv, comment = None, dbapi = None):
 	return match
 
 def add(pkgs, unmask, mask, dbapi):
-	""" Unmask specified packages. """
 	if mask is None:
 		mask = MaskFile(MaskMerge(dbapi))
 	elif isinstance(mask, MaskMerge):
@@ -125,7 +122,6 @@ def add(pkgs, unmask, mask, dbapi):
 	return (unmask, mask)
 
 def delete(pkgs, unmask, mask, dbapi):
-	""" Delete unmask entries for specified packages. """
 	if not isinstance(unmask, UnmaskFile):
 		unmask = UnmaskFile(unmask)
 
@@ -164,13 +160,17 @@ def main(argv):
 
 	gr = optparse.OptionGroup(parser, 'Actions')
 	gr.add_option('-a', '--add', action='append_const',
-			dest='mode', const='add', help=add.__doc__.strip())
+			dest='mode', const='add',
+			help='Unmask specified packages.')
 	gr.add_option('-d', '--delete', action='append_const',
-			dest='mode', const='delete', help=delete.__doc__.strip())
+			dest='mode', const='delete',
+			help='Remove the unmask entries for specified packages.')
 	gr.add_option('-u', '--update', action='append_const',
-			dest='mode', const='update', help=update.__doc__.strip())
+			dest='mode', const='update',
+			help='Update unmasks according to the package.mask files and remove the old ones.')
 	gr.add_option('-v', '--vimdiff', action='append_const',
-			dest='mode', const='vimdiff', help=vimdiff.__doc__.strip())
+			dest='mode', const='vimdiff',
+			help='vimdiff the merged package.mask file with package.unmask.')
 	parser.add_option_group(gr)
 
 	gr = optparse.OptionGroup(parser, 'Options related to vimdiff')
