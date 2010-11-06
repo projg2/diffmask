@@ -14,7 +14,7 @@ class MaskFile(DiffmaskList):
 		class MaskBlock(DiffmaskList):
 			""" A single block of package.mask file. Basically a list of
 				atoms, preserving the comments as well. """
-			class MaskAtom:
+			class MaskAtom(object):
 				""" A single atom in the package.mask block. It can
 					either point to an Atom() instance or a string, if
 					the atom is incorrect. """
